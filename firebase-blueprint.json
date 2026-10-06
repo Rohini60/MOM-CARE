@@ -1,0 +1,237 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with pregnancy details and preferences",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "communityAnonymous": { "type": "boolean" },
+        "age": { "type": "number" },
+        "dueDate": { "type": "string", "maxLength": 32 },
+        "firstPregnancy": { "type": "boolean" },
+        "babyNickname": { "type": "string", "maxLength": 64 },
+        "medicalHistoryNotes": { "type": "string", "maxLength": 2048 },
+        "allergies": { "type": "string", "maxLength": 1024 },
+        "userMedications": { "type": "string", "maxLength": 1024 },
+        "doctorName": { "type": "string", "maxLength": 128 },
+        "clinicName": { "type": "string", "maxLength": 128 },
+        "emergencyContact": { "type": "string", "maxLength": 128 },
+        "saveAiHistory": { "type": "boolean" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "displayName"]
+    },
+    "Checkin": {
+      "title": "Checkin",
+      "description": "Daily 30-second pregnancy check-in",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "week": { "type": "number" },
+        "mood": { "type": "string", "enum": ["great", "good", "okay", "not_great", "worried"] },
+        "energy": { "type": "string", "enum": ["low", "normal", "high"] },
+        "sleep": { "type": "string", "enum": ["poor", "okay", "good"] },
+        "babyMovement": { "type": "string", "enum": ["normal", "less", "concerned", "not_felt_yet"] },
+        "symptoms": { "type": "string", "maxLength": 512 },
+        "notes": { "type": "string", "maxLength": 1024 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "week", "mood"]
+    },
+    "Symptom": {
+      "title": "Symptom",
+      "description": "Logged symptom with AI contextual safety triage",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "week": { "type": "number" },
+        "symptomName": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 2048 },
+        "severity": { "type": "string", "enum": ["mild", "moderate", "severe"] },
+        "duration": { "type": "string", "maxLength": 64 },
+        "riskLevel": { "type": "string", "enum": ["green", "yellow", "red"] },
+        "aiSummary": { "type": "string", "maxLength": 4096 },
+        "nextSteps": { "type": "string", "maxLength": 2048 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "symptomName"]
+    },
+    "CareTask": {
+      "title": "CareTask",
+      "description": "Daily care and wellness tasks",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "category": { "type": "string", "maxLength": 64 },
+        "completed": { "type": "boolean" },
+        "dueDate": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["id", "userId", "title"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Doctor or midwife prenatal appointments",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "doctor": { "type": "string", "maxLength": 128 },
+        "clinic": { "type": "string", "maxLength": 128 },
+        "date": { "type": "string", "maxLength": 32 },
+        "time": { "type": "string", "maxLength": 32 },
+        "notes": { "type": "string", "maxLength": 2048 },
+        "completed": { "type": "boolean" }
+      },
+      "required": ["id", "userId", "title", "date"]
+    },
+    "Medication": {
+      "title": "Medication",
+      "description": "User-entered supplements, vitamins, and medications",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 256 },
+        "dosage": { "type": "string", "maxLength": 128 },
+        "frequency": { "type": "string", "maxLength": 128 },
+        "reminderTime": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["id", "userId", "name"]
+    },
+    "MedicalReport": {
+      "title": "MedicalReport",
+      "description": "Medical lab or ultrasound scan report summary",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "reportName": { "type": "string", "maxLength": 256 },
+        "reportDate": { "type": "string", "maxLength": 32 },
+        "reportType": { "type": "string", "maxLength": 64 },
+        "fileUrl": { "type": "string", "maxLength": 1024 },
+        "aiSummary": { "type": "string", "maxLength": 4096 },
+        "plainLanguageExplanation": { "type": "string", "maxLength": 4096 },
+        "keyValues": { "type": "string", "maxLength": 2048 },
+        "questionsForDoctor": { "type": "string", "maxLength": 2048 }
+      },
+      "required": ["id", "userId", "reportName"]
+    },
+    "AiConversation": {
+      "title": "AiConversation",
+      "description": "Contextual AI conversation history",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "enum": ["user", "assistant"] },
+        "content": { "type": "string", "maxLength": 8192 },
+        "riskLevel": { "type": "string", "enum": ["green", "yellow", "red", "none"] },
+        "sources": { "type": "string", "maxLength": 1024 },
+        "contextNotes": { "type": "string", "maxLength": 2048 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "role", "content"]
+    },
+    "CommunityPost": {
+      "title": "CommunityPost",
+      "description": "Public peer-to-peer maternal post",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "authorId": { "type": "string", "maxLength": 128 },
+        "authorDisplayName": { "type": "string", "maxLength": 128 },
+        "authorRole": { "type": "string", "maxLength": 64 },
+        "week": { "type": "number" },
+        "topic": { "type": "string", "maxLength": 64 },
+        "title": { "type": "string", "maxLength": 256 },
+        "content": { "type": "string", "maxLength": 4096 },
+        "likesCount": { "type": "number" },
+        "commentsCount": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "authorId", "authorDisplayName", "content", "topic"]
+    },
+    "CommunityComment": {
+      "title": "CommunityComment",
+      "description": "Comment on a community post",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "postId": { "type": "string", "maxLength": 128 },
+        "authorId": { "type": "string", "maxLength": 128 },
+        "authorDisplayName": { "type": "string", "maxLength": 128 },
+        "content": { "type": "string", "maxLength": 2048 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "postId", "authorId", "authorDisplayName", "content"]
+    },
+    "CommunityReport": {
+      "title": "CommunityReport",
+      "description": "Flagged inappropriate or unsafe community medical claim",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "reportedBy": { "type": "string", "maxLength": 128 },
+        "postId": { "type": "string", "maxLength": 128 },
+        "reason": { "type": "string", "maxLength": 512 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "reportedBy", "postId", "reason"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile document"
+    },
+    "/users/{userId}/checkins/{checkinId}": {
+      "schema": { "$ref": "#/entities/Checkin" },
+      "description": "Daily check-in logs"
+    },
+    "/users/{userId}/symptoms/{symptomId}": {
+      "schema": { "$ref": "#/entities/Symptom" },
+      "description": "Symptom tracking and triage records"
+    },
+    "/users/{userId}/care_tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/CareTask" },
+      "description": "Daily maternal care tasks"
+    },
+    "/users/{userId}/appointments/{appointmentId}": {
+      "schema": { "$ref": "#/entities/Appointment" },
+      "description": "Prenatal doctor appointments"
+    },
+    "/users/{userId}/medications/{medicationId}": {
+      "schema": { "$ref": "#/entities/Medication" },
+      "description": "User-entered supplements and vitamins"
+    },
+    "/users/{userId}/medical_reports/{reportId}": {
+      "schema": { "$ref": "#/entities/MedicalReport" },
+      "description": "Medical lab and scan report summaries"
+    },
+    "/users/{userId}/ai_conversations/{conversationId}": {
+      "schema": { "$ref": "#/entities/AiConversation" },
+      "description": "AI conversation history"
+    },
+    "/community_posts/{postId}": {
+      "schema": { "$ref": "#/entities/CommunityPost" },
+      "description": "Public community posts"
+    },
+    "/community_posts/{postId}/comments/{commentId}": {
+      "schema": { "$ref": "#/entities/CommunityComment" },
+      "description": "Comments on community posts"
+    },
+    "/community_reports/{reportId}": {
+      "schema": { "$ref": "#/entities/CommunityReport" },
+      "description": "Community moderation reports"
+    }
+  }
+}

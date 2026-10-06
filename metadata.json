@@ -1,0 +1,8 @@
+{
+  "name": "MomCare - AI Pregnancy Companion",
+  "description": "Android-first personalized maternal care companion with contextual AI intelligence, pregnancy journey tracking, symptom assessment, and community support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

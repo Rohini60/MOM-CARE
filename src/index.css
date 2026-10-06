@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* MomCare Soft, Mild Pink & Gentle Neutral Palette */
+    --mc-bg: #FFF0F5; /* Lavender Blush primary app background */
+    --mc-surface: #FFF9FA; /* Delicate warm white surface */
+    --mc-card: #FFFFFF; /* Pure white content card */
+    --mc-primary: #E8C5C8; /* Rose Quartz brand accent */
+    --mc-primary-dark: #A36371; /* Deep Rose for primary interactive buttons & headings */
+    --mc-primary-light: #FADADD; /* Soft Pink */
+    --mc-primary-baby: #F4C2C2; /* Baby Pink */
+    --mc-border: #F5EBEF; /* Gentle soft border */
+    --mc-border-dark: #E8D3DA;
+    --mc-text: #4A3E42; /* Charcoal Plum main text */
+    --mc-text-secondary: #7D6E74; /* Warm Gray secondary text */
+    --mc-text-light: #9B8D93;
+    
+    /* Healthcare Status Tones */
+    --mc-safe: #6E9C7B; /* Sage 🟢 Routine */
+    --mc-safe-light: #EDF5EF;
+    --mc-attention: #CF9B48; /* Soft Amber 🟡 Needs Attention */
+    --mc-attention-light: #FAF3E8;
+    --mc-urgent: #C75D5D; /* Muted Red 🔴 Urgent Warning */
+    --mc-urgent-light: #FBEAEA;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', 'Noto Sans Tamil', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--mc-bg);
+    color: var(--mc-text);
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Custom scrollbar for subtle appearance */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #E8D3DA;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #E8C5C8;
+}
+
+/* Touch ripple & smooth transitions */
+.btn-press {
+  transition: transform 0.15s ease, background-color 0.2s ease, opacity 0.2s ease;
+}
+.btn-press:active {
+  transform: scale(0.97);
+}
+
+
