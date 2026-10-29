@@ -1,6 +1,9 @@
 import React from 'react';
-import { Home, Sparkles, Users, CalendarCheck2, User, HeartPulse, HelpCircle, Presentation, Globe } from 'lucide-react';
+import { Home, Sparkles, Users, CalendarCheck2, User, HeartPulse, HelpCircle, Presentation, Phone } from 'lucide-react';
 import { useTranslation, type Language } from '../translations';
+import { useTheme } from '../context/ThemeContext';
+import { ThemeQuickToggle } from './ThemeQuickToggle';
+import type { UserProfile } from '../types';
 
 export type TabType = 'home' | 'pregnancy' | 'community' | 'care' | 'profile';
 
@@ -15,8 +18,6 @@ interface NavigationProps {
 export const BottomNavigation: React.FC<NavigationProps> = ({
   activeTab,
   onTabChange,
-  onOpenAiChat,
-  onOpenDemo,
   pregnancyWeek = 24,
 }) => {
   const { t } = useTranslation();
@@ -30,7 +31,7 @@ export const BottomNavigation: React.FC<NavigationProps> = ({
   ] as const;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#FFFFFF] border-t border-[#F5EBEF] safe-area-bottom">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[var(--mc-surface)]/95 backdrop-blur-md border-t border-[var(--mc-card-border)] safe-area-bottom shadow-lg shadow-black/40">
       <div className="max-w-md mx-auto px-3 flex items-center justify-around h-16">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -39,16 +40,26 @@ export const BottomNavigation: React.FC<NavigationProps> = ({
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex flex-col items-center justify-center flex-1 py-1 transition-colors ${
-                isActive ? 'text-[#9F5F6E]' : 'text-[#766D72] hover:text-[#352F35]'
+              className={`flex flex-col items-center justify-center flex-1 py-1 transition-all ${
+                isActive ? 'text-[var(--mc-primary)]' : 'text-[var(--mc-text-muted)] hover:text-[var(--mc-text-secondary)]'
               }`}
               style={{ minHeight: '44px', minWidth: '44px' }}
               aria-label={tab.label}
             >
-              <div className={`p-1 rounded-full transition-transform ${isActive ? 'scale-110 bg-[#F2E1E3]' : ''}`}>
-                <Icon className="w-5 h-5 stroke-[2.2]" />
+              <div
+                className={`p-1.5 rounded-xl transition-all ${
+                  isActive
+                    ? 'scale-110 bg-[var(--mc-chip-bg)] border border-[var(--mc-primary)] shadow-[0_0_12px_var(--mc-primary-glow)]'
+                    : ''
+                }`}
+              >
+                <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5] text-[var(--mc-primary)]' : 'stroke-[2]'}`} />
               </div>
-              <span className={`text-[11px] font-medium tracking-tight mt-0.5 ${isActive ? 'font-bold' : ''}`}>
+              <span
+                className={`text-[10px] tracking-tight mt-0.5 ${
+                  isActive ? 'font-bold text-[var(--mc-text-primary)]' : 'text-[var(--mc-text-muted)]'
+                }`}
+              >
                 {tab.label}
               </span>
             </button>
@@ -62,27 +73,29 @@ export const BottomNavigation: React.FC<NavigationProps> = ({
 export const TopAppBar: React.FC<{
   title?: string;
   pregnancyWeek?: number;
+  profile?: UserProfile | null;
   onOpenAiChat: () => void;
   onOpenDemo: () => void;
   onOpenPresentation?: () => void;
+  onOpenEmergency?: () => void;
   isPhoneFrame: boolean;
   onTogglePhoneFrame: () => void;
   isDemoMode?: boolean;
   onExitDemo?: () => void;
   onLanguageChange?: (lang: Language) => void;
 }> = ({
-  title,
   pregnancyWeek = 24,
+  profile,
   onOpenAiChat,
   onOpenDemo,
   onOpenPresentation,
-  isPhoneFrame,
-  onTogglePhoneFrame,
+  onOpenEmergency,
   isDemoMode = false,
   onExitDemo,
   onLanguageChange,
 }) => {
   const { language, setLanguage, t } = useTranslation();
+  const { openThemeModal, theme } = useTheme();
 
   const handleLangSelect = (lang: Language) => {
     setLanguage(lang);
@@ -90,18 +103,18 @@ export const TopAppBar: React.FC<{
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-[#FCF8F6]/95 backdrop-blur-xs border-b border-[#E9DFDC] px-4 py-2">
+    <header className="sticky top-0 z-30 bg-[var(--mc-surface)]/95 backdrop-blur-md border-b border-[var(--mc-card-border)] px-4 py-2.5">
       {/* Demo Evaluation Mode Notice Banner */}
       {isDemoMode && (
-        <div className="max-w-md mx-auto mb-1.5 px-3 py-1 rounded-xl bg-[#FAF3E8] border border-[#CF9B48]/40 flex items-center justify-between text-[11px]">
-          <span className="font-bold text-[#CF9B48] flex items-center gap-1">
-            <Sparkles className="w-3 h-3" />
-            <span>Judges / Demo Evaluation Mode</span>
+        <div className="max-w-md mx-auto mb-1.5 px-3 py-1 rounded-xl bg-[#2A1B0D] border border-[#FFB300]/50 flex items-center justify-between text-[11px] shadow-[0_0_10px_rgba(255,179,0,0.2)]">
+          <span className="font-bold text-[#FFB300] flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-[#FFB300] animate-pulse" />
+            <span>Judges / Demo Telemetry Mode</span>
           </span>
           {onExitDemo && (
             <button
               onClick={onExitDemo}
-              className="text-[#9F5F6E] hover:underline font-bold"
+              className="text-[var(--mc-primary)] hover:underline font-bold transition-colors"
             >
               Exit to App →
             </button>
@@ -109,33 +122,63 @@ export const TopAppBar: React.FC<{
         </div>
       )}
 
-      <div className="max-w-md mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-[#F2E1E3] flex items-center justify-center text-[#9F5F6E] shadow-2xs">
-            <HeartPulse className="w-5 h-5 stroke-[2.2]" />
+      <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-2xl bg-[var(--mc-btn-gradient)] flex items-center justify-center text-white shadow-[0_0_14px_var(--mc-primary-glow)] border border-white/30">
+            <HeartPulse className="w-5 h-5 stroke-[2.4] animate-pulse" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-black text-sm text-[#352F35] tracking-tight">MomCare</span>
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F2E1E3] border border-[#E9DFDC] text-[#9F5F6E]">
+            <div className="flex items-center gap-2">
+              <span className="font-black text-base text-[var(--mc-text-primary)] tracking-tight neon-text-glow">
+                MomCare
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--mc-chip-bg)] border border-[var(--mc-chip-border)] text-[var(--mc-text-primary)] shadow-xs">
                 Wk {pregnancyWeek}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          {/* Language Switcher in Top Bar (Part 2 requirement) */}
-          <div className="flex rounded-xl bg-white border border-[#E9DFDC] p-0.5 text-[10px] font-bold shadow-2xs">
+        <div className="flex items-center gap-2">
+          {/* Visible "Theme" Button with 🎨 icon opening the popup modal */}
+          <button
+            type="button"
+            onClick={openThemeModal}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-[var(--mc-card-border)] bg-[var(--mc-chip-bg)] text-[var(--mc-text-primary)] hover:border-[var(--mc-primary)] transition-all font-bold text-xs shadow-xs cursor-pointer active:scale-95"
+            title="Choose MomCare Look (Neon Blue / Neon Pink)"
+            aria-label="Choose MomCare Theme"
+          >
+            <span className="text-sm">🎨</span>
+            <span className="font-mono text-xs">Theme</span>
+            <span className="text-[10px] opacity-80">
+              {theme === 'neon-blue' ? '💙' : '💗'}
+            </span>
+          </button>
+
+          {/* Always Visible Emergency Call Button (Safety Rule 5 - Never Changes Color) */}
+          {onOpenEmergency && (
+            <button
+              type="button"
+              onClick={onOpenEmergency}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#FF003C] to-[#C4002D] hover:from-[#FF1A4D] hover:to-[#E00034] text-white text-xs font-bold transition-all shadow-[0_0_14px_rgba(255,0,60,0.6)] active:scale-95 border border-[#FF8099]/30 cursor-pointer"
+              title="Emergency / Call Ambulance"
+            >
+              <Phone className="w-3.5 h-3.5 fill-current animate-pulse text-white" />
+              <span className="hidden sm:inline font-mono">🔴 {t.callAmbulanceBtn}</span>
+            </button>
+          )}
+
+          {/* Language Switcher in Top Bar */}
+          <div className="flex rounded-xl bg-[var(--mc-chip-bg)] border border-[var(--mc-chip-border)] p-0.5 text-[10px] font-bold shadow-inner">
             {(['en', 'ta', 'hi'] as Language[]).map((lang) => (
               <button
                 key={lang}
                 type="button"
                 onClick={() => handleLangSelect(lang)}
-                className={`px-1.5 py-1 rounded-lg transition-all ${
+                className={`px-2 py-1 rounded-lg transition-all ${
                   language === lang
-                    ? 'bg-[#9F5F6E] text-white shadow-2xs font-extrabold'
-                    : 'text-[#766D72] hover:text-[#352F35]'
+                    ? 'bg-[var(--mc-btn-gradient)] text-white font-extrabold shadow-xs'
+                    : 'text-[var(--mc-text-secondary)] hover:text-[var(--mc-text-primary)]'
                 }`}
                 title={`Switch to ${lang === 'en' ? 'English' : lang === 'ta' ? 'தமிழ்' : 'हिन्दी'}`}
               >
@@ -150,20 +193,20 @@ export const TopAppBar: React.FC<{
               {onOpenPresentation && (
                 <button
                   onClick={onOpenPresentation}
-                  className="flex items-center gap-1 px-2 py-1.5 rounded-xl border border-[#E9DFDC] bg-white text-[#9F5F6E] text-xs font-semibold hover:bg-[#F2E1E3] transition-colors shadow-2xs"
+                  className="hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[var(--mc-card-border)] bg-[var(--mc-surface)] text-[var(--mc-text-secondary)] text-xs font-semibold hover:border-[var(--mc-primary)] transition-colors shadow-sm"
                   title="Open 15-Slide Presentation Deck"
                 >
-                  <Presentation className="w-3.5 h-3.5 text-[#C98291]" />
+                  <Presentation className="w-3.5 h-3.5 text-[var(--mc-primary)]" />
                   <span className="hidden sm:inline">Slides</span>
                 </button>
               )}
 
               <button
                 onClick={onOpenDemo}
-                className="flex items-center gap-1 px-2 py-1.5 rounded-xl border border-[#E9DFDC] bg-white text-[#352F35] text-xs font-semibold hover:bg-[#F2E1E3] transition-colors shadow-2xs"
+                className="hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-[var(--mc-card-border)] bg-[var(--mc-surface)] text-[var(--mc-text-secondary)] text-xs font-semibold hover:border-[var(--mc-primary)] transition-colors shadow-sm"
                 title="Open Demo Scenarios (Routine, Yellow, Urgent)"
               >
-                <HelpCircle className="w-3.5 h-3.5 text-[#766D72]" />
+                <HelpCircle className="w-3.5 h-3.5 text-[var(--mc-primary)]" />
                 <span className="hidden sm:inline">Demo</span>
               </button>
             </>
@@ -172,9 +215,9 @@ export const TopAppBar: React.FC<{
           {/* Ask MomCare Quick Action */}
           <button
             onClick={onOpenAiChat}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#9F5F6E] text-[#FFFFFF] text-xs font-semibold hover:bg-[#8F525F] transition-colors shadow-2xs"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl cyber-gradient-btn text-white text-xs font-bold border border-white/20 cursor-pointer"
           >
-            <Sparkles className="w-3 h-3" />
+            <Sparkles className="w-3.5 h-3.5 text-white" />
             <span>{t.askMomCareBtn}</span>
           </button>
         </div>

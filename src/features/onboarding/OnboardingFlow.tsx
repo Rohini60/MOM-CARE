@@ -21,6 +21,8 @@ import type { UserProfile } from '../../types';
 import { calculatePregnancyProgress, calculateDueDateFromCurrentWeek } from '../../utils/pregnancy';
 import { saveUserProfile } from '../../services/firebase/userService';
 import { useTranslation, type Language } from '../../translations';
+import { useTheme } from '../../context/ThemeContext';
+import { ThemeSelector } from '../../components/ThemeSelector';
 
 interface OnboardingFlowProps {
   userId: string;
@@ -38,8 +40,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
   onCancel,
 }) => {
   const { language, setLanguage, t } = useTranslation();
+  const { theme, colorMode } = useTheme();
 
-  // Current Step: 1, 2, 3, 4, or 'consent'
+  // Current Step: 1, 2, 3, 4, 5, or 'consent'
   const [currentStep, setCurrentStep] = useState<number | 'consent'>(1);
   const [isSaving, setIsSaving] = useState(false);
   const [generalSaveError, setGeneralSaveError] = useState(false);
@@ -169,6 +172,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
     } else if (currentStep === 3) {
       setCurrentStep(4);
     } else if (currentStep === 4) {
+      setCurrentStep(5);
+    } else if (currentStep === 5) {
       setCurrentStep('consent');
     }
   };
@@ -179,6 +184,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
     setGeneralSaveError(false);
 
     if (currentStep === 'consent') {
+      setCurrentStep(5);
+    } else if (currentStep === 5) {
       setCurrentStep(4);
     } else if (currentStep === 4) {
       setCurrentStep(3);
@@ -231,6 +238,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
           ? `${doctorName || 'Doctor'}: ${doctorPhone}`
           : null,
         preferredLanguage: language,
+        theme,
+        colorMode,
         consentGiven: true,
         consentDate: new Date().toISOString(),
         saveAiHistory: true,
@@ -253,33 +262,36 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
 
   const progressPercentage =
     currentStep === 1
-      ? 25
+      ? 20
       : currentStep === 2
-      ? 50
+      ? 40
       : currentStep === 3
-      ? 75
+      ? 60
       : currentStep === 4
-      ? 90
+      ? 80
+      : currentStep === 5
+      ? 95
       : 100;
 
   return (
-    <div className="min-h-screen bg-[#FCF8F6] text-[#352F35] flex flex-col justify-between max-w-md mx-auto p-5 sm:p-6 relative">
-      <div>
-        {/* Top Navigation & Language Quick Switcher */}
+    <div className="min-h-screen bg-[var(--mc-bg)] text-[var(--mc-text-primary)] flex items-center justify-center p-4 sm:p-6 lg:p-8 cyber-grid-pattern">
+      <div className="w-full max-w-[640px] cyber-card rounded-3xl sm:rounded-[32px] border border-[var(--mc-card-border)] shadow-xl p-6 sm:p-8 flex flex-col justify-between min-h-[580px]">
+        <div>
+          {/* Top Navigation & Language Quick Switcher */}
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={handleBack}
-            className="p-2 rounded-xl bg-white border border-[#E9DFDC] text-[#766D72] hover:text-[#352F35] transition-colors"
+            className="p-2 rounded-xl bg-[var(--mc-surface)] border border-[var(--mc-card-border)] text-[var(--mc-text-muted)] hover:text-[var(--mc-text-primary)] transition-colors cursor-pointer"
             title="Go back"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
 
           <div className="text-center">
-            <span className="text-[11px] font-bold text-[#9F5F6E] uppercase tracking-wider block">
-              {currentStep === 'consent' ? t.consentTitle : `${t.stepTitle} ${currentStep} ${t.stepOf}`}
+            <span className="text-[11px] font-bold text-[var(--mc-primary)] uppercase tracking-wider block font-mono">
+              {currentStep === 'consent' ? t.consentTitle : `${t.stepTitle} ${currentStep} of 5`}
             </span>
-            <span className="text-xs text-[#766D72] font-medium">{t.appName}</span>
+            <span className="text-xs text-[var(--mc-text-muted)] font-medium">{t.appName}</span>
           </div>
 
           {/* Quick Language Toggle */}
@@ -766,6 +778,22 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
           </div>
         )}
 
+        {/* STEP 5: Choose your MomCare look */}
+        {currentStep === 5 && (
+          <div className="space-y-4 animate-in fade-in">
+            <div>
+              <h2 className="text-2xl font-black text-[var(--mc-text-primary)] tracking-tight">
+                Choose your MomCare look
+              </h2>
+              <p className="text-xs sm:text-sm text-[var(--mc-text-muted)] mt-1">
+                Personalize your cyber companion with Neon Blue or Neon Pink, in Dark or Light mode. You can change this anytime.
+              </p>
+            </div>
+
+            <ThemeSelector />
+          </div>
+        )}
+
         {/* CONSENT SCREEN */}
         {currentStep === 'consent' && (
           <div className="space-y-4 animate-in fade-in">
@@ -839,7 +867,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
         {currentStep !== 'consent' ? (
           <button
             onClick={handleNext}
-            className="w-full py-4 rounded-2xl bg-[#9F5F6E] hover:bg-[#8F525F] active:scale-[0.99] text-white text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl cyber-gradient-btn text-white text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
           >
             <span>{t.continueBtn}</span>
             <ChevronRight className="w-4 h-4 stroke-[2.5]" />
@@ -848,12 +876,13 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
           <button
             onClick={handleComplete}
             disabled={!consentAgreed || isSaving}
-            className="w-full py-4 rounded-2xl bg-[#9F5F6E] hover:bg-[#8F525F] active:scale-[0.99] text-white text-sm font-bold shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl cyber-gradient-btn text-white text-sm font-bold shadow-md disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
           >
             <span>{isSaving ? t.settingUp : t.finishAndStart}</span>
           </button>
         )}
       </div>
     </div>
+  </div>
   );
 };

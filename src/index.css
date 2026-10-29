@@ -1,60 +1,309 @@
 @import "tailwindcss";
 
 @layer base {
-  :root {
-    /* MomCare Soft, Mild Pink & Gentle Neutral Palette */
-    --mc-bg: #FFF0F5; /* Lavender Blush primary app background */
-    --mc-surface: #FFF9FA; /* Delicate warm white surface */
-    --mc-card: #FFFFFF; /* Pure white content card */
-    --mc-primary: #E8C5C8; /* Rose Quartz brand accent */
-    --mc-primary-dark: #A36371; /* Deep Rose for primary interactive buttons & headings */
-    --mc-primary-light: #FADADD; /* Soft Pink */
-    --mc-primary-baby: #F4C2C2; /* Baby Pink */
-    --mc-border: #F5EBEF; /* Gentle soft border */
-    --mc-border-dark: #E8D3DA;
-    --mc-text: #4A3E42; /* Charcoal Plum main text */
-    --mc-text-secondary: #7D6E74; /* Warm Gray secondary text */
-    --mc-text-light: #9B8D93;
-    
-    /* Healthcare Status Tones */
-    --mc-safe: #6E9C7B; /* Sage 🟢 Routine */
-    --mc-safe-light: #EDF5EF;
-    --mc-attention: #CF9B48; /* Soft Amber 🟡 Needs Attention */
-    --mc-attention-light: #FAF3E8;
-    --mc-urgent: #C75D5D; /* Muted Red 🔴 Urgent Warning */
-    --mc-urgent-light: #FBEAEA;
+  /* Default: Neon Pink (Dark Mode) */
+  :root,
+  [data-theme="neon-pink"][data-mode="dark"],
+  [data-theme="neon-pink"]:not([data-mode="light"]) {
+    --mc-bg: #1A0B1F;
+    --mc-surface: #1F0E25;
+    --mc-surface-elevated: #2A1232;
+    --mc-card: #26112D;
+    --mc-card-border: rgba(255, 62, 165, 0.26);
+    --mc-card-hover-border: rgba(255, 62, 165, 0.55);
+
+    --mc-primary: #FF3EA5;
+    --mc-primary-accent: #C13CFF;
+    --mc-primary-glow: rgba(255, 62, 165, 0.45);
+    --mc-primary-glow-subtle: rgba(255, 62, 165, 0.2);
+    --mc-btn-gradient: linear-gradient(135deg, #FF3EA5 0%, #E6005C 45%, #C13CFF 100%);
+    --mc-btn-gradient-hover: linear-gradient(135deg, #FF5CAA 0%, #FF3EA5 50%, #D8005E 100%);
+
+    --mc-pastel: #FFD1E3;
+    --mc-pastel-soft: #FCA5C6;
+    --mc-text-primary: #FFF0F6;
+    --mc-text-secondary: #E3BCCC;
+    --mc-text-muted: #A38495;
+    --mc-input-bg: #1B0B20;
+    --mc-input-border: rgba(255, 62, 165, 0.35);
+
+    --mc-chip-bg: #2E1536;
+    --mc-chip-border: rgba(255, 62, 165, 0.38);
+    --mc-chip-text: #FFD1E3;
+
+    --mc-grid-line: rgba(255, 62, 165, 0.05);
+
+    /* Fixed Clinical Tri-Color Status */
+    --mc-safe: #10E599;
+    --mc-safe-glow: rgba(16, 229, 153, 0.3);
+    --mc-attention: #FFB300;
+    --mc-attention-glow: rgba(255, 179, 0, 0.3);
+    --mc-urgent: #FF003C;
+    --mc-urgent-glow: rgba(255, 0, 60, 0.55);
+  }
+
+  /* Neon Pink (Light Mode) */
+  [data-theme="neon-pink"][data-mode="light"] {
+    --mc-bg: #FFF3FA;
+    --mc-surface: #FFFFFF;
+    --mc-surface-elevated: #FCEAF4;
+    --mc-card: #FFFFFF;
+    --mc-card-border: #F5D2E8;
+    --mc-card-hover-border: #FF3EA5;
+
+    --mc-primary: #D81B7D;
+    --mc-primary-accent: #9C27B0;
+    --mc-primary-glow: rgba(216, 27, 125, 0.25);
+    --mc-primary-glow-subtle: rgba(216, 27, 125, 0.12);
+    --mc-btn-gradient: linear-gradient(135deg, #FF3EA5 0%, #D81B7D 50%, #9C27B0 100%);
+    --mc-btn-gradient-hover: linear-gradient(135deg, #FF5CAA 0%, #FF3EA5 50%, #C2185B 100%);
+
+    --mc-pastel: #FFD1E3;
+    --mc-pastel-soft: #FCA5C6;
+    --mc-text-primary: #2A0F2A; /* Deep plum for WCAG AA */
+    --mc-text-secondary: #5E295E;
+    --mc-text-muted: #83577D;
+    --mc-input-bg: #FFFFFF;
+    --mc-input-border: #F0C4DF;
+
+    --mc-chip-bg: #FDE7F4;
+    --mc-chip-border: #F5B8DD;
+    --mc-chip-text: #831851;
+
+    --mc-grid-line: rgba(216, 27, 125, 0.04);
+
+    /* Fixed Clinical Tri-Color Status */
+    --mc-safe: #10E599;
+    --mc-safe-glow: rgba(16, 229, 153, 0.3);
+    --mc-attention: #FFB300;
+    --mc-attention-glow: rgba(255, 179, 0, 0.3);
+    --mc-urgent: #FF003C;
+    --mc-urgent-glow: rgba(255, 0, 60, 0.55);
+  }
+
+  /* Neon Blue (Dark Mode) */
+  [data-theme="neon-blue"][data-mode="dark"],
+  [data-theme="neon-blue"]:not([data-mode="light"]) {
+    --mc-bg: #0A1128;
+    --mc-surface: #0D1736;
+    --mc-surface-elevated: #132049;
+    --mc-card: #111C3D;
+    --mc-card-border: rgba(0, 212, 255, 0.26);
+    --mc-card-hover-border: rgba(0, 212, 255, 0.55);
+
+    --mc-primary: #00D4FF;
+    --mc-primary-accent: #2F6BFF;
+    --mc-primary-glow: rgba(0, 212, 255, 0.45);
+    --mc-primary-glow-subtle: rgba(0, 212, 255, 0.2);
+    --mc-btn-gradient: linear-gradient(135deg, #00D4FF 0%, #0099FF 45%, #2F6BFF 100%);
+    --mc-btn-gradient-hover: linear-gradient(135deg, #38E1FF 0%, #00D4FF 50%, #1A52E6 100%);
+
+    --mc-pastel: #D0E8FF;
+    --mc-pastel-soft: #A8D4FF;
+    --mc-text-primary: #E8F1FF;
+    --mc-text-secondary: #B0C8FF;
+    --mc-text-muted: #7088B8;
+    --mc-input-bg: #0C1633;
+    --mc-input-border: rgba(0, 212, 255, 0.35);
+
+    --mc-chip-bg: #14224A;
+    --mc-chip-border: rgba(0, 212, 255, 0.38);
+    --mc-chip-text: #D0E8FF;
+
+    --mc-grid-line: rgba(0, 212, 255, 0.05);
+
+    /* Fixed Clinical Tri-Color Status */
+    --mc-safe: #10E599;
+    --mc-safe-glow: rgba(16, 229, 153, 0.3);
+    --mc-attention: #FFB300;
+    --mc-attention-glow: rgba(255, 179, 0, 0.3);
+    --mc-urgent: #FF003C;
+    --mc-urgent-glow: rgba(255, 0, 60, 0.55);
+  }
+
+  /* Neon Blue (Light Mode) */
+  [data-theme="neon-blue"][data-mode="light"] {
+    --mc-bg: #F2F8FF;
+    --mc-surface: #FFFFFF;
+    --mc-surface-elevated: #E6F1FE;
+    --mc-card: #FFFFFF;
+    --mc-card-border: #CBE0F8;
+    --mc-card-hover-border: #00A3CC;
+
+    --mc-primary: #0077B6;
+    --mc-primary-accent: #1D4ED8;
+    --mc-primary-glow: rgba(0, 163, 204, 0.22);
+    --mc-primary-glow-subtle: rgba(0, 163, 204, 0.1);
+    --mc-btn-gradient: linear-gradient(135deg, #00A3CC 0%, #0077B6 50%, #1D4ED8 100%);
+    --mc-btn-gradient-hover: linear-gradient(135deg, #00B4D8 0%, #0096C7 50%, #1E40AF 100%);
+
+    --mc-pastel: #D0E8FF;
+    --mc-pastel-soft: #A8D4FF;
+    --mc-text-primary: #0A1128; /* Deep navy for WCAG AA */
+    --mc-text-secondary: #2D3E6B;
+    --mc-text-muted: #556A99;
+    --mc-input-bg: #FFFFFF;
+    --mc-input-border: #BBD6F5;
+
+    --mc-chip-bg: #E1EFFF;
+    --mc-chip-border: #BCD9FA;
+    --mc-chip-text: #0E488F;
+
+    --mc-grid-line: rgba(0, 163, 204, 0.04);
+
+    /* Fixed Clinical Tri-Color Status */
+    --mc-safe: #10E599;
+    --mc-safe-glow: rgba(16, 229, 153, 0.3);
+    --mc-attention: #FFB300;
+    --mc-attention-glow: rgba(255, 179, 0, 0.3);
+    --mc-urgent: #FF003C;
+    --mc-urgent-glow: rgba(255, 0, 60, 0.55);
   }
 
   body {
-    font-family: 'Plus Jakarta Sans', 'Noto Sans Tamil', 'Noto Sans Devanagari', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: 'Space Grotesk', 'Plus Jakarta Sans', 'Noto Sans Tamil', 'Noto Sans Devanagari', system-ui, -apple-system, sans-serif;
     background-color: var(--mc-bg);
-    color: var(--mc-text);
+    color: var(--mc-text-primary);
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
+    transition: background-color 300ms cubic-bezier(0.16, 1, 0.3, 1),
+                color 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Smooth 300ms color transition across theme changes without page reload */
+  *, *::before, *::after {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+    transition-duration: 300ms;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Respect user's device reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      transition-duration: 0.001ms !important;
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+    }
   }
 }
 
-/* Custom scrollbar for subtle appearance */
+/* Dynamic Glowing and Cyber UI utilities using CSS Variables */
+.cyber-card {
+  background: var(--mc-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--mc-card-border);
+  color: var(--mc-text-primary);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 15px var(--mc-primary-glow-subtle);
+}
+
+.cyber-card-interactive {
+  background: var(--mc-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--mc-card-border);
+  color: var(--mc-text-primary);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cyber-card-interactive:hover {
+  border-color: var(--mc-card-hover-border);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2), 0 0 20px var(--mc-primary-glow);
+  transform: translateY(-1px);
+}
+
+.cyber-gradient-btn {
+  background: var(--mc-btn-gradient);
+  box-shadow: 0 0 16px var(--mc-primary-glow);
+  color: #FFFFFF;
+  transition: all 0.25s ease;
+}
+
+.cyber-gradient-btn:hover {
+  background: var(--mc-btn-gradient-hover);
+  box-shadow: 0 0 26px var(--mc-primary-glow);
+  transform: translateY(-1px);
+}
+
+.neon-glow-pink {
+  box-shadow: 0 0 15px var(--mc-primary-glow), 0 0 35px var(--mc-primary-glow-subtle);
+}
+
+.neon-glow-theme {
+  box-shadow: 0 0 15px var(--mc-primary-glow), 0 0 35px var(--mc-primary-glow-subtle);
+}
+
+.neon-text-glow {
+  text-shadow: 0 0 12px var(--mc-primary-glow);
+}
+
+.cyber-grid-pattern {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, var(--mc-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--mc-grid-line) 1px, transparent 1px);
+}
+
+/* Subtle, slow pulse for AI Thinking (respects reduced motion) */
+@keyframes aiThinkingPulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.98);
+    box-shadow: 0 0 10px var(--mc-primary-glow-subtle);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+    box-shadow: 0 0 24px var(--mc-primary-glow);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(0.98);
+    box-shadow: 0 0 10px var(--mc-primary-glow-subtle);
+  }
+}
+
+.ai-thinking-pulse {
+  animation: aiThinkingPulse 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-thinking-pulse {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--mc-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #E8D3DA;
+  background: var(--mc-card-border);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #E8C5C8;
+  background: var(--mc-primary);
+  box-shadow: 0 0 10px var(--mc-primary-glow);
 }
 
-/* Touch ripple & smooth transitions */
-.btn-press {
-  transition: transform 0.15s ease, background-color 0.2s ease, opacity 0.2s ease;
+/* Doctor Summary & Medical Reports Print Cleanliness */
+@media print {
+  body, #root, [data-theme] {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+  }
+  .cyber-card, .cyber-card-interactive {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    border: 1px solid #D0D0D0 !important;
+    box-shadow: none !important;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
 }
-.btn-press:active {
-  transform: scale(0.97);
-}
-
-

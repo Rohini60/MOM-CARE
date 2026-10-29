@@ -22,6 +22,7 @@ import {
   Activity,
   ShieldAlert,
   Edit3,
+  HeartPulse,
 } from 'lucide-react';
 import type { UserProfile, Checkin, CareTask, SymptomRecord } from '../../types';
 import { calculatePregnancyProgress } from '../../utils/pregnancy';
@@ -42,6 +43,7 @@ interface HomeScreenProps {
   onOpenSymptomCenter: () => void;
   onOpenAiChat: (prompt?: string) => void;
   onOpenReports: () => void;
+  onOpenVitals?: () => void;
 }
 
 type MoodOption = 'good' | 'okay' | 'not_well' | 'pain';
@@ -56,6 +58,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenSymptomCenter,
   onOpenAiChat,
   onOpenReports,
+  onOpenVitals,
 }) => {
   const { language, t } = useTranslation();
   const progress = calculatePregnancyProgress(profile?.dueDate);
@@ -514,45 +517,46 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       )}
 
-      {/* 1. GREETING - Personalized to mother, baby, and recent state */}
-      <div className="bg-gradient-to-r from-[#FFF5F7] via-[#FFF0F5] to-[#FCF8F6] p-4 sm:p-5 rounded-3xl border border-[#FADADD] shadow-xs space-y-1.5 transition-all">
-        <div className="flex items-center justify-between">
+      {/* 1. GREETING - Personalized to mother, baby, and recent state in Futuristic Cyber Style */}
+      <div className="bg-gradient-to-r from-[var(--mc-surface-elevated)] via-[var(--mc-card)] to-[var(--mc-surface)] p-4 sm:p-5 rounded-3xl border border-[var(--mc-card-border)] shadow-[var(--mc-glow)] space-y-1.5 transition-all relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-[var(--mc-primary)]/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="flex items-center justify-between relative z-10">
           <div className="flex items-center gap-2">
-            <span className="text-xl">💗</span>
-            <span className="text-xs font-bold text-[#A36371] uppercase tracking-wider">
+            <span className="text-xl animate-pulse">✨</span>
+            <span className="text-xs font-mono font-bold text-[var(--mc-text-secondary)] uppercase tracking-wider">
               {profile?.babyNickname ? `${profile.babyNickname} & Mom` : 'MomCare Companion'}
             </span>
           </div>
-          <span className="px-2.5 py-0.5 rounded-full bg-white/90 border border-[#FADADD] text-[11px] font-bold text-[#A36371]">
+          <span className="px-3 py-0.5 rounded-full bg-[var(--mc-chip-bg)] border border-[var(--mc-card-border)] text-[11px] font-mono font-bold text-[var(--mc-primary)] shadow-xs">
             Wk {progress.weeks} + {progress.days}d
           </span>
         </div>
-        <h1 className="text-base sm:text-lg font-bold text-[#4A3E42] leading-snug">
+        <h1 className="text-base sm:text-lg font-bold text-[var(--mc-text-primary)] leading-snug relative z-10">
           {dynamicGreeting}
         </h1>
       </div>
 
       {/* 2. "HOW ARE YOU TODAY?" CARD - One-tap mood row & Guided Step-by-Step Flow */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-[#F5EBEF] shadow-xs space-y-3 transition-all duration-300">
+      <div className="cyber-card rounded-3xl p-4 sm:p-5 shadow-[var(--mc-glow)] space-y-3.5 transition-all duration-300">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#FFF0F5] text-[#A36371] flex items-center justify-center font-bold">
-              <Smile className="w-4 h-4" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[var(--mc-btn-gradient)] text-white flex items-center justify-center font-bold shadow-xs">
+              <Smile className="w-4 h-4 stroke-[2.5]" />
             </div>
             <div>
-              <h2 className="font-bold text-sm sm:text-base text-[#4A3E42]">
+              <h2 className="font-bold text-sm sm:text-base text-[var(--mc-text-primary)]">
                 {t.howAreYouToday}
               </h2>
-              <p className="text-[11px] text-[#7D6E74]">{t.howAreYouSub}</p>
+              <p className="text-[11px] text-[var(--mc-text-secondary)]">{t.howAreYouSub}</p>
             </div>
           </div>
 
           {hasCheckedInToday && !isCheckinFlowOpen && (
             <button
               onClick={() => handleStartCheckin()}
-              className="text-xs font-semibold text-[#A36371] hover:underline flex items-center gap-1 bg-[#FFF0F5] px-2.5 py-1 rounded-xl border border-[#FADADD]"
+              className="text-xs font-semibold text-[var(--mc-primary)] hover:opacity-80 flex items-center gap-1.5 bg-[var(--mc-chip-bg)] px-3 py-1 rounded-xl border border-[var(--mc-card-border)] transition-colors shadow-xs cursor-pointer"
             >
-              <Edit3 className="w-3.5 h-3.5" />
+              <Edit3 className="w-3.5 h-3.5 text-[var(--mc-primary)]" />
               <span>{t.editCheckin}</span>
             </button>
           )}
@@ -561,7 +565,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* If already checked in today and not editing, show summary badge with re-selectable mood buttons */}
         {!isCheckinFlowOpen && (
           <div className="space-y-2.5">
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
                 { key: 'good', emoji: '😊', label: t.good, desc: 'Energized' },
                 { key: 'okay', emoji: '😐', label: t.okay, desc: 'Normal' },
@@ -580,24 +584,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     key={item.key}
                     type="button"
                     onClick={() => handleStartCheckin(item.key as MoodOption)}
-                    className={`py-3 px-2 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1 min-h-[72px] active:scale-95 ${
+                    className={`py-3 px-2 rounded-2xl border text-center transition-all flex flex-col items-center justify-center gap-1 min-h-[72px] active:scale-95 cursor-pointer ${
                       isCurrent
-                        ? 'bg-[#FFF0F5] border-[#A36371] text-[#A36371] shadow-2xs ring-2 ring-[#A36371]/30 font-bold'
-                        : 'bg-[#FFF9FA] border-[#F5EBEF] text-[#4A3E42] hover:bg-[#FFF0F5] hover:border-[#FADADD]'
+                        ? 'bg-[var(--mc-chip-bg)] border-[var(--mc-primary)] text-[var(--mc-text-primary)] shadow-[var(--mc-glow)] ring-2 ring-[var(--mc-primary)]/50 font-bold'
+                        : 'bg-[var(--mc-card)] border-[var(--mc-card-border)] text-[var(--mc-text-secondary)] hover:bg-[var(--mc-chip-bg)] hover:border-[var(--mc-primary)]/50'
                     }`}
                   >
-                    <span className="text-2xl">{item.emoji}</span>
+                    <span className="text-2xl drop-shadow-sm">{item.emoji}</span>
                     <span className="text-xs font-semibold">{item.label}</span>
-                    {isCurrent && <Check className="w-3.5 h-3.5 text-[#A36371] stroke-[3]" />}
+                    {isCurrent && <Check className="w-3.5 h-3.5 text-[var(--mc-primary)] stroke-[3]" />}
                   </button>
                 );
               })}
             </div>
 
             {hasCheckedInToday && (
-              <div className="p-3 rounded-2xl bg-[#FFF9FA] border border-[#F5EBEF] flex items-center justify-between text-xs text-[#7D6E74]">
+              <div className="p-3 rounded-2xl bg-[var(--mc-surface-elevated)] border border-[var(--mc-card-border)] flex items-center justify-between text-xs text-[var(--mc-text-secondary)] shadow-inner">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#6E9C7B]" />
+                  <CheckCircle2 className="w-4 h-4 text-[#10E599] shadow-[0_0_6px_#10E599]" />
                   <span>
                     {t.doneToday} • {todayCheckin?.mood === 'good' ? '😊 Good' : todayCheckin?.mood === 'okay' ? '😐 Okay' : todayCheckin?.mood === 'not_great' ? '😟 Not well' : '😣 Pain'}
                     {todayCheckin?.sleep && ` • ${t.trendSleep}: ${todayCheckin.sleep}`}
@@ -605,7 +609,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </div>
                 <button
                   onClick={() => handleStartCheckin()}
-                  className="text-[#A36371] font-semibold hover:underline"
+                  className="text-[var(--mc-primary)] font-semibold hover:underline font-mono cursor-pointer"
                 >
                   Change
                 </button>
@@ -614,26 +618,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         )}
 
-        {/* GUIDED CHECK-IN STEP-BY-STEP DIALOG / FLOW (one question per screen) */}
+        {/* GUIDED CHECK-IN STEP-BY-STEP DIALOG / FLOW (one question per screen, centered max-w-[640px]) */}
         {isCheckinFlowOpen && (
-          <div className="p-4 sm:p-5 rounded-2xl bg-[#FFF9FA] border border-[#FADADD] space-y-4 animate-in fade-in transition-all">
+          <div className="max-w-[640px] mx-auto w-full p-4 sm:p-5 rounded-2xl bg-[#1A0D22] border border-[#FF1A75]/40 space-y-4 animate-in fade-in transition-all shadow-[0_0_20px_rgba(255,26,117,0.2)]">
             {/* Header progress bar */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs font-semibold text-[#7D6E74]">
-                <span className="text-[#A36371] font-bold">
+              <div className="flex items-center justify-between text-xs font-semibold text-[#E3BCCC]">
+                <span className="text-[#FFD1E3] font-bold font-mono">
                   {t.questionProgress.replace('{current}', String(flowStep)).replace('{total}', String(totalFlowSteps))}
                 </span>
                 <button
                   type="button"
                   onClick={() => setIsCheckinFlowOpen(false)}
-                  className="text-[#7D6E74] hover:text-[#4A3E42] underline text-[11px]"
+                  className="text-[#A38495] hover:text-[#FFF0F6] underline text-[11px]"
                 >
                   Cancel
                 </button>
               </div>
-              <div className="w-full bg-[#E9DFDC] h-1.5 rounded-full overflow-hidden">
+              <div className="w-full bg-[#2A1230] h-1.5 rounded-full overflow-hidden border border-[#FF1A75]/20">
                 <div
-                  className="bg-[#A36371] h-full transition-all duration-300"
+                  className="bg-gradient-to-r from-[#FF1A75] to-[#FF0055] h-full transition-all duration-300 shadow-[0_0_8px_rgba(255,26,117,0.7)]"
                   style={{ width: `${(flowStep / totalFlowSteps) * 100}%` }}
                 />
               </div>
@@ -939,18 +943,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         )}
       </div>
 
-      {/* 3. PERSONAL AI INSIGHT CARD - With data chips, 'Why am I seeing this?', and 7-day trends */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-[#F5EBEF] shadow-xs space-y-3.5 transition-all">
+      {/* DESKTOP GRID ROW 2: Personal AI Insight Card and Today's Focus side by side */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-start">
+        {/* 3. PERSONAL AI INSIGHT CARD - With data chips, 'Why am I seeing this?', and 7-day trends */}
+      <div className="cyber-card rounded-3xl p-4 sm:p-5 shadow-[0_0_20px_rgba(255,26,117,0.14)] space-y-3.5 transition-all">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#FAF3E8] to-[#FFF0F5] border border-[#FADADD] text-[#A36371] flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#FF1A75] to-[#B80048] text-white flex items-center justify-center shadow-[0_0_10px_rgba(255,26,117,0.5)]">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="font-bold text-sm sm:text-base text-[#4A3E42]">
+              <h2 className="font-bold text-sm sm:text-base text-[#FFF0F6]">
                 {t.personalAiInsightTitle}
               </h2>
-              <div className="flex items-center gap-2 text-[11px] text-[#7D6E74]">
+              <div className="flex items-center gap-2 text-[11px] text-[#E3BCCC] font-mono">
                 <span>
                   {t.profileLearningLabel.replace('{days}', String(Math.min(7, recentCheckins.length)))}
                 </span>
@@ -960,40 +966,40 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
           <button
             onClick={() => setShowWhyModal(true)}
-            className="text-[11px] font-semibold text-[#A36371] hover:underline flex items-center gap-1 bg-[#FFF0F5] px-2 py-0.5 rounded-lg border border-[#FADADD]"
+            className="text-[11px] font-mono font-semibold text-[#FFD1E3] hover:text-white flex items-center gap-1 bg-[#23102A] px-2.5 py-1 rounded-lg border border-[#FF1A75]/35 transition-colors"
           >
-            <HelpCircle className="w-3 h-3" />
+            <HelpCircle className="w-3.5 h-3.5 text-[#FF1A75]" />
             <span>{t.whyAmISeeingThis}</span>
           </button>
         </div>
 
         {/* Loading skeleton / friendly state with animated text if waiting */}
         {isLoadingInsight ? (
-          <div className="p-4 rounded-2xl bg-[#FFF9FA] border border-[#F5EBEF] space-y-3 animate-pulse">
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#A36371]">
-              <div className="w-4 h-4 border-2 border-[#A36371] border-t-transparent rounded-full animate-spin" />
+          <div className="p-4 rounded-2xl bg-[#1A0C22] border border-[#FF1A75]/30 space-y-3 animate-pulse">
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#FFD1E3]">
+              <div className="w-4 h-4 border-2 border-[#FF1A75] border-t-transparent rounded-full animate-spin" />
               <span>{loadingMessages[loadingMessageIdx]}</span>
             </div>
-            <div className="h-3 bg-[#F2E1E3] rounded-md w-3/4" />
-            <div className="h-3 bg-[#F2E1E3] rounded-md w-full" />
-            <div className="h-3 bg-[#F2E1E3] rounded-md w-2/3" />
+            <div className="h-3 bg-[#2A1133] rounded-md w-3/4" />
+            <div className="h-3 bg-[#2A1133] rounded-md w-full" />
+            <div className="h-3 bg-[#2A1133] rounded-md w-2/3" />
           </div>
         ) : (
           <div className="space-y-3">
             {/* The Main Insight (Maximum 3 sentences) */}
-            <div className="p-4 rounded-2xl bg-[#FFF9FA] border border-[#FADADD]/80 space-y-2">
-              <p className="text-xs sm:text-sm text-[#4A3E42] leading-relaxed">
+            <div className="p-4 rounded-2xl bg-[#190C20] border border-[#FF1A75]/35 space-y-2 shadow-inner">
+              <p className="text-xs sm:text-sm text-[#FFF0F6] leading-relaxed">
                 {insightData?.insightText ||
                   `At week ${progress.weeks}, your body is doing wonderful work. Stay hydrated and take a restful 15-minute side-lying break when tired.`}
               </p>
 
               {/* Data tags used in this insight */}
               <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                <span className="text-[10px] text-[#7D6E74] font-medium">{t.dataUsedLabel}</span>
+                <span className="text-[10px] text-[#E3BCCC] font-mono font-medium">{t.dataUsedLabel}</span>
                 {dataChips.map((chip, idx) => (
                   <span
                     key={idx}
-                    className="px-2 py-0.5 rounded-md bg-white border border-[#E9DFDC] text-[10px] text-[#7D6E74] font-medium"
+                    className="px-2 py-0.5 rounded-md bg-[#24102C] border border-[#FF1A75]/30 text-[10px] text-[#FFD1E3] font-mono"
                   >
                     {chip}
                   </span>
@@ -1002,58 +1008,58 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </div>
 
             {/* 7-day Trend Row with arrows */}
-            <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="p-2 rounded-xl bg-[#FFF9FA] border border-[#F5EBEF]">
-                <span className="text-[10px] text-[#7D6E74] block">{t.trendSleep}</span>
-                <span className="font-bold flex items-center justify-center gap-0.5 text-[#4A3E42]">
+            <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono">
+              <div className="p-2 rounded-xl bg-[#1A0C22] border border-[#FF1A75]/25">
+                <span className="text-[10px] text-[#E3BCCC] block">{t.trendSleep}</span>
+                <span className="font-bold flex items-center justify-center gap-0.5 text-[#FFF0F6] mt-0.5">
                   {trends.sleep === 'better' ? (
-                    <span className="text-[#6E9C7B] flex items-center gap-0.5">
+                    <span className="text-[#10E599] flex items-center gap-0.5 shadow-[0_0_6px_#10E599]">
                       <TrendingUp className="w-3.5 h-3.5" /> {t.trendBetter}
                     </span>
                   ) : trends.sleep === 'lower' ? (
-                    <span className="text-[#A36371] flex items-center gap-0.5">
+                    <span className="text-[#FF1A75] flex items-center gap-0.5">
                       <TrendingDown className="w-3.5 h-3.5" /> {t.trendLower}
                     </span>
                   ) : (
-                    <span className="text-[#7D6E74] flex items-center gap-0.5">
+                    <span className="text-[#E3BCCC] flex items-center gap-0.5">
                       <Minus className="w-3.5 h-3.5" /> {t.trendSame}
                     </span>
                   )}
                 </span>
               </div>
 
-              <div className="p-2 rounded-xl bg-[#FFF9FA] border border-[#F5EBEF]">
-                <span className="text-[10px] text-[#7D6E74] block">{t.trendEnergy}</span>
-                <span className="font-bold flex items-center justify-center gap-0.5 text-[#4A3E42]">
+              <div className="p-2 rounded-xl bg-[#1A0C22] border border-[#FF1A75]/25">
+                <span className="text-[10px] text-[#E3BCCC] block">{t.trendEnergy}</span>
+                <span className="font-bold flex items-center justify-center gap-0.5 text-[#FFF0F6] mt-0.5">
                   {trends.energy === 'better' ? (
-                    <span className="text-[#6E9C7B] flex items-center gap-0.5">
+                    <span className="text-[#10E599] flex items-center gap-0.5 shadow-[0_0_6px_#10E599]">
                       <TrendingUp className="w-3.5 h-3.5" /> {t.trendBetter}
                     </span>
                   ) : trends.energy === 'lower' ? (
-                    <span className="text-[#A36371] flex items-center gap-0.5">
+                    <span className="text-[#FF1A75] flex items-center gap-0.5">
                       <TrendingDown className="w-3.5 h-3.5" /> {t.trendLower}
                     </span>
                   ) : (
-                    <span className="text-[#7D6E74] flex items-center gap-0.5">
+                    <span className="text-[#E3BCCC] flex items-center gap-0.5">
                       <Minus className="w-3.5 h-3.5" /> {t.trendSame}
                     </span>
                   )}
                 </span>
               </div>
 
-              <div className="p-2 rounded-xl bg-[#FFF9FA] border border-[#F5EBEF]">
-                <span className="text-[10px] text-[#7D6E74] block">{t.trendMovement}</span>
-                <span className="font-bold flex items-center justify-center gap-0.5 text-[#4A3E42]">
+              <div className="p-2 rounded-xl bg-[#1A0C22] border border-[#FF1A75]/25">
+                <span className="text-[10px] text-[#E3BCCC] block">{t.trendMovement}</span>
+                <span className="font-bold flex items-center justify-center gap-0.5 text-[#FFF0F6] mt-0.5">
                   {trends.movement === 'better' ? (
-                    <span className="text-[#6E9C7B] flex items-center gap-0.5">
+                    <span className="text-[#10E599] flex items-center gap-0.5 shadow-[0_0_6px_#10E599]">
                       <TrendingUp className="w-3.5 h-3.5" /> {t.trendBetter}
                     </span>
                   ) : trends.movement === 'lower' ? (
-                    <span className="text-[#A36371] flex items-center gap-0.5">
+                    <span className="text-[#FF1A75] flex items-center gap-0.5">
                       <TrendingDown className="w-3.5 h-3.5" /> {t.trendLower}
                     </span>
                   ) : (
-                    <span className="text-[#7D6E74] flex items-center gap-0.5">
+                    <span className="text-[#E3BCCC] flex items-center gap-0.5">
                       <Minus className="w-3.5 h-3.5" /> {t.trendSame}
                     </span>
                   )}
@@ -1062,11 +1068,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </div>
 
             {insightError && (
-              <div className="flex items-center justify-between text-xs text-[#7D6E74] pt-1">
+              <div className="flex items-center justify-between text-xs text-[#E3BCCC] pt-1">
                 <span>Week-based guidance displayed</span>
                 <button
                   onClick={() => loadDailyInsight(true)}
-                  className="text-[#A36371] font-semibold hover:underline flex items-center gap-1"
+                  className="text-[#FF1A75] font-semibold hover:underline flex items-center gap-1"
                 >
                   <RotateCcw className="w-3 h-3" />
                   <span>{t.tryAgainBtn}</span>
@@ -1078,17 +1084,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       </div>
 
       {/* 4. TODAY'S FOCUS (3 tasks based on her situation) */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-[#F5EBEF] shadow-xs space-y-3 transition-all">
+      <div className="cyber-card rounded-3xl p-4 sm:p-5 shadow-[0_0_20px_rgba(255,26,117,0.14)] space-y-3 transition-all">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-bold text-sm sm:text-base text-[#4A3E42]">
+            <h2 className="font-bold text-sm sm:text-base text-[#FFF0F6]">
               {t.todaysFocusTitle}
             </h2>
-            <p className="text-[11px] text-[#7D6E74]">
+            <p className="text-[11px] text-[#E3BCCC]">
               {t.todaysFocusCount.replace('{completed}', String(completedFocusIndices.length))}
             </p>
           </div>
-          <span className="text-xs font-bold text-[#6E9C7B] bg-[#EDF5EF] px-2.5 py-1 rounded-full border border-[#CFE3D5]">
+          <span className="text-xs font-mono font-bold text-[#10E599] bg-[#0C241B] px-3 py-1 rounded-full border border-[#10E599]/40 shadow-[0_0_8px_rgba(16,229,153,0.3)]">
             {completedFocusIndices.length === 3 ? '3/3 Done 🌸' : `${completedFocusIndices.length}/3`}
           </span>
         </div>
@@ -1103,21 +1109,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 onClick={() => toggleFocusTask(idx)}
                 className={`w-full p-3 rounded-2xl border text-left transition-all flex items-center justify-between gap-3 min-h-[48px] active:scale-98 ${
                   isDone
-                    ? 'bg-[#EDF5EF]/60 border-[#6E9C7B] text-[#7D6E74]'
-                    : 'bg-[#FFF9FA] border-[#F5EBEF] text-[#4A3E42] hover:bg-[#FFF0F5]'
+                    ? 'bg-[#0E2018] border-[#10E599]/40 text-[#A38495]'
+                    : 'bg-[#180C1E] border-[#FF1A75]/25 text-[#FFF0F6] hover:bg-[#230F29] hover:border-[#FF1A75]/50'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
                   <div
                     className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${
                       isDone
-                        ? 'bg-[#6E9C7B] border-[#6E9C7B] text-white'
-                        : 'border-[#E9DFDC] bg-white'
+                        ? 'bg-[#10E599] border-[#10E599] text-[#0A1A12] shadow-[0_0_6px_#10E599]'
+                        : 'border-[#FF1A75]/40 bg-[#25102C]'
                     }`}
                   >
                     {isDone && <Check className="w-4 h-4 stroke-[3]" />}
                   </div>
-                  <span className={`text-xs font-medium leading-snug ${isDone ? 'line-through text-[#7D6E74]' : 'text-[#4A3E42]'}`}>
+                  <span className={`text-xs font-medium leading-snug ${isDone ? 'line-through text-[#A38495]' : 'text-[#FFF0F6]'}`}>
                     {taskText}
                   </span>
                 </div>
@@ -1127,200 +1133,229 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
 
         {completedFocusIndices.length === 3 && (
-          <p className="text-xs text-[#2E7D32] font-semibold text-center bg-[#EDF5EF] p-2.5 rounded-xl">
+          <p className="text-xs text-[#10E599] font-mono font-semibold text-center bg-[#0C241B] p-2.5 rounded-xl border border-[#10E599]/30">
             {t.allTasksDone}
           </p>
         )}
       </div>
+      </div>
 
-      {/* 5. SMART NUDGES (Max 2 reminders) */}
-      {smartNudges.length > 0 && (
-        <div className="bg-[#FFF0F5]/50 rounded-3xl p-4 sm:p-5 border border-[#FADADD] shadow-xs space-y-2.5">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-[#A36371]">
-            <span>🔔</span>
-            <span>{t.smartNudgesTitle}</span>
+      {/* DESKTOP GRID ROW 3: Trend row, Smart Nudges, Ask MomCare shortcuts, Weekly Snapshot in 3-col grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 items-start">
+        {/* Column 1: Smart Nudges & Gentle Missing Details */}
+        <div className="space-y-4">
+          {/* 5. SMART NUDGES (Max 2 reminders) */}
+          {smartNudges.length > 0 && (
+            <div className="bg-[#240F2C]/75 rounded-3xl p-4 sm:p-5 border border-[#FF1A75]/40 shadow-[0_0_15px_rgba(255,26,117,0.18)] space-y-2.5">
+              <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-[#FFD1E3]">
+                <span className="text-[#FF1A75]">⚡</span>
+                <span>{t.smartNudgesTitle}</span>
+              </div>
+
+              <div className="space-y-2">
+                {smartNudges.map((nudge) => (
+                  <div
+                    key={nudge.id}
+                    onClick={nudge.action}
+                    className={`p-3 rounded-2xl bg-[#190B20] border border-[#FF1A75]/30 flex items-center justify-between gap-3 text-xs shadow-inner transition-all ${
+                      nudge.action ? 'cursor-pointer hover:border-[#FF1A75]' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-lg shrink-0">{nudge.icon}</span>
+                      <p className="text-[#FFF0F6] font-medium leading-relaxed">{nudge.text}</p>
+                    </div>
+                    {nudge.action && (
+                      <button className="text-[#FF1A75] font-mono font-bold shrink-0 text-xs hover:underline">
+                        Take action →
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 6. ASK FOR MISSING DETAILS GENTLY (1 small card at a time with quick answer & skip) */}
+          {missingDetailItem && (
+            <div className="cyber-card rounded-3xl p-4 sm:p-5 shadow-[0_0_15px_rgba(255,26,117,0.14)] space-y-2.5 transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono font-bold text-[#FFD1E3] flex items-center gap-1.5">
+                  <span className="text-[#FF1A75]">🌸</span>
+                  <span>{t.knowYouBetterTitle}</span>
+                </span>
+                <button
+                  onClick={() => setMissingFieldAnswered(true)}
+                  className="text-[11px] text-[#A38495] hover:text-[#FFF0F6] underline"
+                >
+                  {t.skipForNow}
+                </button>
+              </div>
+
+              <p className="text-xs text-[#FFF0F6] font-medium leading-snug">
+                {missingDetailItem.label}
+              </p>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type={missingDetailItem.type}
+                  value={tempMissingInput}
+                  onChange={(e) => setTempMissingInput(e.target.value)}
+                  placeholder={missingDetailItem.placeholder}
+                  className="flex-1 bg-[#1C0D24] border border-[#FF1A75]/30 rounded-xl px-3 py-2 text-xs text-[#FFF0F6] placeholder-[#A38495] focus:outline-hidden focus:border-[#FF1A75]"
+                />
+                <button
+                  disabled={savingMissingField || !tempMissingInput.trim()}
+                  onClick={handleSaveMissingField}
+                  className="px-4 py-2 rounded-xl cyber-gradient-btn text-white text-xs font-bold disabled:opacity-40 shadow-xs shrink-0 font-mono"
+                >
+                  {savingMissingField ? '...' : t.saveAnswer}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Column 2: 7. ASK MOMCARE SHORTCUTS (3 questions made from her own situation) */}
+        <div className="cyber-card rounded-3xl p-4 sm:p-5 shadow-[var(--mc-glow)] space-y-3">
+          <div>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--mc-text-primary)] mb-0.5">
+              <Sparkles className="w-4 h-4 text-[var(--mc-primary)]" />
+              <span>{t.askMomCareShortcutsTitle}</span>
+            </div>
+            <p className="text-[11px] text-[var(--mc-text-secondary)]">{t.askMomCareShortcutsSub}</p>
           </div>
 
           <div className="space-y-2">
-            {smartNudges.map((nudge) => (
-              <div
-                key={nudge.id}
-                onClick={nudge.action}
-                className={`p-3 rounded-2xl bg-white border border-[#FADADD] flex items-center justify-between gap-3 text-xs shadow-2xs transition-all ${
-                  nudge.action ? 'cursor-pointer hover:border-[#A36371]' : ''
-                }`}
+            {suggestedShortcuts.map((q, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => onOpenAiChat(q)}
+                className="w-full p-3 rounded-2xl bg-[var(--mc-card)] border border-[var(--mc-card-border)] hover:border-[var(--mc-primary)] hover:bg-[var(--mc-surface-elevated)] transition-all text-left flex items-center justify-between gap-3 text-xs font-medium text-[var(--mc-text-primary)] shadow-inner group min-h-[44px] cursor-pointer"
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-lg shrink-0">{nudge.icon}</span>
-                  <p className="text-[#4A3E42] font-medium leading-relaxed">{nudge.text}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-[var(--mc-primary)] font-bold">💬</span>
+                  <span>{q}</span>
                 </div>
-                {nudge.action && (
-                  <button className="text-[#A36371] font-bold shrink-0 text-xs hover:underline">
-                    Take action →
-                  </button>
-                )}
-              </div>
+                <ChevronRight className="w-4 h-4 text-[var(--mc-text-secondary)] group-hover:text-[var(--mc-primary)] shrink-0" />
+              </button>
             ))}
           </div>
         </div>
-      )}
 
-      {/* 6. ASK FOR MISSING DETAILS GENTLY (1 small card at a time with quick answer & skip) */}
-      {missingDetailItem && (
-        <div className="bg-white rounded-3xl p-4 sm:p-5 border border-[#F5EBEF] shadow-xs space-y-2.5 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#A36371] flex items-center gap-1.5">
-              <span>🌸</span>
-              <span>{t.knowYouBetterTitle}</span>
-            </span>
-            <button
-              onClick={() => setMissingFieldAnswered(true)}
-              className="text-[11px] text-[#7D6E74] hover:underline"
-            >
-              {t.skipForNow}
-            </button>
-          </div>
-
-          <p className="text-xs text-[#4A3E42] font-medium leading-snug">
-            {missingDetailItem.label}
-          </p>
-
-          <div className="flex items-center gap-2 pt-1">
-            <input
-              type={missingDetailItem.type}
-              value={tempMissingInput}
-              onChange={(e) => setTempMissingInput(e.target.value)}
-              placeholder={missingDetailItem.placeholder}
-              className="flex-1 bg-[#FFF9FA] border border-[#E9DFDC] rounded-xl px-3 py-2 text-xs text-[#4A3E42] focus:outline-hidden focus:border-[#A36371]"
-            />
-            <button
-              disabled={savingMissingField || !tempMissingInput.trim()}
-              onClick={handleSaveMissingField}
-              className="px-4 py-2 rounded-xl bg-[#A36371] text-white text-xs font-bold hover:bg-[#8F525F] transition-colors disabled:opacity-40 shadow-2xs shrink-0"
-            >
-              {savingMissingField ? '...' : t.saveAnswer}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 7. ASK MOMCARE SHORTCUTS (3 questions made from her own situation) */}
-      <div className="bg-white rounded-3xl p-4 sm:p-5 border border-[#F5EBEF] shadow-xs space-y-3">
-        <div>
-          <div className="flex items-center gap-1.5 text-xs font-bold text-[#A36371] mb-0.5">
-            <Sparkles className="w-4 h-4" />
-            <span>{t.askMomCareShortcutsTitle}</span>
-          </div>
-          <p className="text-[11px] text-[#7D6E74]">{t.askMomCareShortcutsSub}</p>
-        </div>
-
-        <div className="space-y-2">
-          {suggestedShortcuts.map((q, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => onOpenAiChat(q)}
-              className="w-full p-3 rounded-2xl bg-[#FFF9FA] border border-[#F5EBEF] hover:border-[#FADADD] hover:bg-[#FFF0F5] transition-all text-left flex items-center justify-between gap-3 text-xs font-medium text-[#4A3E42] shadow-2xs group min-h-[44px]"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-[#A36371] font-bold">💬</span>
-                <span>{q}</span>
+        {/* Column 3: 8. WEEKLY SNAPSHOT & Quick Shortcuts */}
+        <div className="space-y-4">
+          <div className="cyber-card rounded-3xl p-4 shadow-[var(--mc-glow)] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-[var(--mc-chip-bg)] border border-[var(--mc-card-border)] flex items-center justify-center text-xl shrink-0 shadow-xs">
+                👶
               </div>
-              <ChevronRight className="w-4 h-4 text-[#7D6E74] group-hover:text-[#A36371] shrink-0" />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 8. WEEKLY SNAPSHOT (Smaller card below personal cards) */}
-      <div className="bg-white rounded-3xl p-4 border border-[#F5EBEF] shadow-xs flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[#FFF0F5] border border-[#FADADD] flex items-center justify-center text-xl shrink-0">
-            👶
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-[#4A3E42]">
-                Week {progress.weeks}
-              </span>
-              <span className="text-[11px] text-[#A36371] font-medium">
-                • Size of {weekData.fruitComparison}
-              </span>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-[var(--mc-text-primary)]">
+                    Week {progress.weeks}
+                  </span>
+                  <span className="text-[11px] text-[var(--mc-primary)] font-medium font-mono">
+                    • {weekData.fruitComparison}
+                  </span>
+                </div>
+                <p className="text-[11px] text-[var(--mc-text-secondary)] font-mono">
+                  {weekData.approxLength}, {weekData.approxWeight}
+                </p>
+              </div>
             </div>
-            <p className="text-[11px] text-[#7D6E74]">
-              {weekData.approxLength}, {weekData.approxWeight}
-            </p>
+
+            <button
+              onClick={() => onOpenJourney(progress.weeks)}
+              className="text-xs font-mono font-bold text-[var(--mc-primary)] hover:opacity-80 underline flex items-center gap-0.5 shrink-0 cursor-pointer"
+            >
+              <span>{t.viewFullStory}</span>
+            </button>
+          </div>
+
+          {/* Quick Action Buttons for Triage, Vitals & Scans */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+            <button
+              onClick={onOpenSymptomCenter}
+              className="p-3 rounded-2xl bg-[var(--mc-card)] border border-[var(--mc-card-border)] hover:border-[var(--mc-primary)] transition-all flex items-center gap-2.5 shadow-xs min-h-[52px] cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-xl bg-[var(--mc-chip-bg)] text-[var(--mc-primary)] flex items-center justify-center shrink-0 border border-[var(--mc-chip-border)]">
+                <Activity className="w-4 h-4 text-[var(--mc-primary)]" />
+              </div>
+              <div className="text-left">
+                <span className="font-bold text-[var(--mc-text-primary)] block">{t.safetyTriageBtn}</span>
+                <span className="text-[10px] text-[var(--mc-text-secondary)] font-mono">Sensations</span>
+              </div>
+            </button>
+
+            {onOpenVitals && (
+              <button
+                onClick={onOpenVitals}
+                className="p-3 rounded-2xl bg-[var(--mc-surface-elevated)] border border-[var(--mc-primary)]/45 hover:border-[var(--mc-primary)] transition-all flex items-center gap-2.5 shadow-xs min-h-[52px] group cursor-pointer"
+              >
+                <div className="w-8 h-8 rounded-xl bg-[var(--mc-btn-gradient)] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <HeartPulse className="w-4 h-4 stroke-[2.3] group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="text-left">
+                  <span className="font-bold text-[var(--mc-text-primary)] block flex items-center gap-1">
+                    <span>Vitals Check</span>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-[var(--mc-chip-bg)] text-[var(--mc-primary)]">
+                      ML
+                    </span>
+                  </span>
+                  <span className="text-[10px] text-[var(--mc-text-secondary)] font-mono">BP & Sugar</span>
+                </div>
+              </button>
+            )}
+
+            <button
+              onClick={onOpenReports}
+              className="p-3 rounded-2xl bg-[var(--mc-card)] border border-[var(--mc-card-border)] hover:border-[var(--mc-primary)] transition-all flex items-center gap-2.5 shadow-xs min-h-[52px] cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-xl bg-[var(--mc-chip-bg)] text-[var(--mc-primary)] flex items-center justify-center shrink-0 border border-[var(--mc-chip-border)]">
+                <span className="text-sm">📋</span>
+              </div>
+              <div className="text-left">
+                <span className="font-bold text-[var(--mc-text-primary)] block">{t.medicalReportsBtn}</span>
+                <span className="text-[10px] text-[var(--mc-text-secondary)] font-mono">Explain scans</span>
+              </div>
+            </button>
           </div>
         </div>
-
-        <button
-          onClick={() => onOpenJourney(progress.weeks)}
-          className="text-xs font-bold text-[#A36371] hover:underline flex items-center gap-0.5 shrink-0"
-        >
-          <span>{t.viewFullStory}</span>
-        </button>
-      </div>
-
-      {/* Quick Action Buttons for Triage & Scans */}
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        <button
-          onClick={onOpenSymptomCenter}
-          className="p-3 rounded-2xl bg-white border border-[#F5EBEF] hover:border-[#E8C5C8] transition-all flex items-center gap-2.5 shadow-2xs min-h-[52px]"
-        >
-          <div className="w-8 h-8 rounded-xl bg-[#FFF0F5] text-[#A36371] flex items-center justify-center shrink-0">
-            <Activity className="w-4 h-4" />
-          </div>
-          <div className="text-left">
-            <span className="font-bold text-[#4A3E42] block">{t.safetyTriageBtn}</span>
-            <span className="text-[10px] text-[#7D6E74]">Green/Yellow/Red triage</span>
-          </div>
-        </button>
-
-        <button
-          onClick={onOpenReports}
-          className="p-3 rounded-2xl bg-white border border-[#F5EBEF] hover:border-[#E8C5C8] transition-all flex items-center gap-2.5 shadow-2xs min-h-[52px]"
-        >
-          <div className="w-8 h-8 rounded-xl bg-[#FFF0F5] text-[#A36371] flex items-center justify-center shrink-0">
-            <span className="text-sm">📋</span>
-          </div>
-          <div className="text-left">
-            <span className="font-bold text-[#4A3E42] block">{t.medicalReportsBtn}</span>
-            <span className="text-[10px] text-[#7D6E74]">Explain scans & labs</span>
-          </div>
-        </button>
       </div>
 
       {/* Safety Note at bottom */}
       <div className="pt-2 text-center">
-        <p className="text-[11px] text-[#7D6E74] leading-relaxed max-w-sm mx-auto">
+        <p className="text-[11px] text-[#A38495] leading-relaxed max-w-sm mx-auto font-mono">
           {t.homeDisclaimerNote}
         </p>
       </div>
 
       {/* "Why am I seeing this?" Simple Explanation Modal */}
       {showWhyModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-5 border border-[#FADADD] shadow-2xl space-y-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in">
+          <div className="w-full max-w-sm bg-[#180C1F] rounded-3xl p-5 border border-[#FF1A75]/40 shadow-[0_0_30px_rgba(255,26,117,0.3)] space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-sm text-[#4A3E42] flex items-center gap-1.5">
-                <HelpCircle className="w-4 h-4 text-[#A36371]" />
+              <h3 className="font-bold text-sm text-[#FFF0F6] flex items-center gap-1.5">
+                <HelpCircle className="w-4 h-4 text-[#FF1A75]" />
                 <span>{t.whyAmISeeingThis}</span>
               </h3>
               <button
                 onClick={() => setShowWhyModal(false)}
-                className="text-[#7D6E74] hover:text-[#4A3E42] font-bold text-xs"
+                className="text-[#A38495] hover:text-[#FFF0F6] font-bold text-xs"
               >
                 ✕
               </button>
             </div>
 
-            <p className="text-xs text-[#4A3E42] leading-relaxed">
+            <p className="text-xs text-[#E3BCCC] leading-relaxed">
               {insightData?.whyAmISeeingThis ||
                 'This suggestion was generated from your recent daily check-ins, current gestational week, and health history.'}
             </p>
 
-            <div className="p-3 rounded-xl bg-[#FFF9FA] border border-[#F5EBEF] text-[11px] text-[#7D6E74] space-y-1">
-              <span className="font-bold text-[#4A3E42] block">Data considered:</span>
+            <div className="p-3 rounded-xl bg-[#200F29] border border-[#FF1A75]/25 text-[11px] text-[#E3BCCC] space-y-1 font-mono">
+              <span className="font-bold text-[#FFD1E3] block">Data considered:</span>
               <ul className="list-disc list-inside space-y-0.5">
                 <li>Gestational week: {progress.weeks}</li>
                 <li>Your logged sleep and energy trends</li>
@@ -1331,7 +1366,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
             <button
               onClick={() => setShowWhyModal(false)}
-              className="w-full py-2.5 rounded-xl bg-[#A36371] text-white text-xs font-bold hover:bg-[#8F525F] transition-colors"
+              className="w-full py-2.5 rounded-xl cyber-gradient-btn text-white text-xs font-bold"
             >
               Understood
             </button>

@@ -1,3 +1,6 @@
+export type AppTheme = 'neon-pink' | 'neon-blue';
+export type ColorMode = 'dark' | 'light';
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -22,6 +25,8 @@ export interface UserProfile {
   familyContactName?: string | null;
   familyContactPhone?: string | null;
   preferredLanguage?: 'en' | 'ta' | 'hi';
+  theme?: AppTheme;
+  colorMode?: ColorMode;
   consentGiven?: boolean;
   consentDate?: string | null;
   saveAiHistory: boolean;

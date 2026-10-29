@@ -1,30 +1,33 @@
 import React, { useState } from 'react';
 import {
-  X,
+  HeartPulse,
   Mail,
   Lock,
   ArrowRight,
-  HeartPulse,
   AlertTriangle,
-  CheckCircle2,
+  X,
   Eye,
   EyeOff,
+  CheckCircle2,
 } from 'lucide-react';
 import {
+  loginWithGoogle,
   loginWithEmail,
   signupWithEmail,
-  loginWithGoogle,
   resetPassword,
 } from '../../services/firebase/authService';
 import { getUserProfile } from '../../services/firebase/userService';
-import type { UserProfile } from '../../types';
 import { useTranslation } from '../../translations';
+import type { UserProfile } from '../../types';
 
 interface AuthModalProps {
   isOpen: boolean;
   initialMode?: 'login' | 'signup';
   onClose: () => void;
-  onAuthenticated: (profile: UserProfile | null, authUser: { uid: string; email: string }) => void;
+  onAuthenticated: (
+    profile: UserProfile | null,
+    authUser: { uid: string; email: string }
+  ) => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -44,95 +47,75 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [authError, setAuthError] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
 
+  // Sync mode if changed from outside
   React.useEffect(() => {
     setMode(initialMode);
     setAuthError('');
     setResetSuccess(false);
-    setPassword('');
-    setConfirmPassword('');
   }, [initialMode, isOpen]);
 
   if (!isOpen) return null;
 
-  const formatAuthError = (err: any): string => {
-    const code = err?.code || '';
-    const msg = (err?.message || '').toLowerCase();
+  const handleFriendlyError = (code: string) => {
+    switch (code) {
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+        return t.wrongCredentials;
+      case 'auth/user-not-found':
+        return t.noAccountFound;
+      case 'auth/email-already-in-use':
+        return 'An account already exists with this email.';
+      case 'auth/weak-password':
+        return 'Password should be at least 6 characters.';
+      case 'auth/network-request-failed':
+        return t.noInternetNotice;
+      default:
+        return 'Authentication failed. Please check your details and try again.';
+    }
+  };
 
-    if (
-      code === 'auth/invalid-credential' ||
-      code === 'auth/wrong-password' ||
-      msg.includes('invalid-credential') ||
-      msg.includes('wrong-password')
-    ) {
-      return t.wrongCredentials;
+  const handleGoogleAuth = async () => {
+    try {
+      setIsLoading(true);
+      setAuthError('');
+      const user = await loginWithGoogle();
+      const existingProfile = await getUserProfile(user.uid);
+      onAuthenticated(existingProfile, { uid: user.uid, email: user.email || '' });
+      onClose();
+    } catch (err: any) {
+      console.error('Google sign in error:', err);
+      setAuthError(handleFriendlyError(err?.code || ''));
+    } finally {
+      setIsLoading(false);
     }
-    if (code === 'auth/user-not-found' || msg.includes('user-not-found')) {
-      return t.noAccountFound;
-    }
-    if (code === 'auth/email-already-in-use' || msg.includes('email-already-in-use')) {
-      return 'An account already exists with this email.';
-    }
-    if (code === 'auth/weak-password' || msg.includes('weak-password')) {
-      return 'Password should be at least 6 characters.';
-    }
-    if (code === 'auth/invalid-email' || msg.includes('invalid-email')) {
-      return 'Please enter a valid email address.';
-    }
-    if (
-      code === 'auth/network-request-failed' ||
-      msg.includes('network') ||
-      msg.includes('offline')
-    ) {
-      return t.noInternetNotice;
-    }
-    if (code === 'auth/popup-closed-by-user') {
-      return 'Google sign-in was cancelled.';
-    }
-    return t.errSaveGeneral;
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password) {
-      setAuthError('Please fill in email and password.');
-      return;
-    }
+    if (!email || !password) return;
 
     if (mode === 'signup' && password !== confirmPassword) {
       setAuthError(t.passwordsMustMatch);
       return;
     }
 
-    setIsLoading(true);
-    setAuthError('');
-
     try {
-      if (mode === 'signup') {
-        const user = await signupWithEmail(email.trim(), password, '');
-        onAuthenticated(null, { uid: user.uid, email: user.email || email.trim() });
-      } else {
-        const user = await loginWithEmail(email.trim(), password);
+      setIsLoading(true);
+      setAuthError('');
+
+      if (mode === 'login') {
+        const user = await loginWithEmail(email, password);
         const existingProfile = await getUserProfile(user.uid);
-        onAuthenticated(existingProfile, { uid: user.uid, email: user.email || email.trim() });
+        onAuthenticated(existingProfile, { uid: user.uid, email: user.email || '' });
+      } else {
+        const user = await signupWithEmail(email, password, '');
+        // New account: profile does not exist yet
+        onAuthenticated(null, { uid: user.uid, email: user.email || '' });
       }
       onClose();
     } catch (err: any) {
-      setAuthError(formatAuthError(err));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleAuth = async () => {
-    setIsLoading(true);
-    setAuthError('');
-    try {
-      const user = await loginWithGoogle();
-      const existingProfile = await getUserProfile(user.uid);
-      onAuthenticated(existingProfile, { uid: user.uid, email: user.email || '' });
-      onClose();
-    } catch (err: any) {
-      setAuthError(formatAuthError(err));
+      console.error('Email auth error:', err);
+      setAuthError(handleFriendlyError(err?.code || ''));
     } finally {
       setIsLoading(false);
     }
@@ -140,44 +123,47 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) {
-      setAuthError('Please enter your email.');
-      return;
-    }
-    setIsLoading(true);
-    setAuthError('');
+    if (!email) return;
+
     try {
-      await resetPassword(email.trim());
+      setIsLoading(true);
+      setAuthError('');
+      await resetPassword(email);
       setResetSuccess(true);
     } catch (err: any) {
-      setAuthError(formatAuthError(err));
+      console.error('Password reset error:', err);
+      setAuthError(handleFriendlyError(err?.code || ''));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#2B1F24]/75 backdrop-blur-xs p-4 animate-in fade-in duration-300">
-      <div className="bg-[#FCF8F6] text-[#352F35] w-full max-w-sm rounded-3xl p-6 sm:p-7 border border-[#E9DFDC] shadow-2xl relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in">
+      <div className="w-full max-w-[440px] bg-[var(--mc-surface)]/95 backdrop-blur-xl border border-[var(--mc-card-border)] rounded-3xl p-6 sm:p-8 shadow-[var(--mc-glow)] relative overflow-hidden">
+        {/* Glow accent orb */}
+        <div className="absolute -top-16 -right-16 w-48 h-48 bg-[var(--mc-primary)]/15 rounded-full blur-2xl pointer-events-none" />
+
         {/* Close Button */}
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-xl bg-white border border-[#E9DFDC] text-[#766D72] hover:text-[#352F35] transition-colors"
-          title="Close"
+          className="absolute top-4 right-4 p-2 rounded-xl text-[var(--mc-text-secondary)] hover:text-[var(--mc-text-primary)] hover:bg-[var(--mc-chip-bg)] transition-colors cursor-pointer"
+          aria-label="Close"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* Top Header */}
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-[#F2E1E3] flex items-center justify-center text-[#9F5F6E] mx-auto mb-3 shadow-2xs">
-            <HeartPulse className="w-6 h-6 stroke-[2.2]" />
+        <div className="text-center mb-6 relative z-10">
+          <div className="w-12 h-12 rounded-2xl bg-[var(--mc-btn-gradient)] flex items-center justify-center text-white mx-auto mb-3 shadow-[0_0_15px_var(--mc-primary-glow)] border border-white/30">
+            <HeartPulse className="w-6 h-6 stroke-[2.3] animate-pulse" />
           </div>
 
-          <h2 className="text-xl font-black text-[#352F35]">
+          <h2 className="text-xl font-black text-[var(--mc-text-primary)] neon-text-glow">
             {mode === 'login' ? t.welcomeBack : mode === 'signup' ? t.createYourAccount : t.resetPasswordTitle}
           </h2>
-          <p className="text-xs text-[#766D72] mt-1">
+          <p className="text-xs text-[var(--mc-text-secondary)] mt-1">
             {mode === 'login'
               ? t.loginSubtitle
               : mode === 'signup'
@@ -188,17 +174,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Mode Switcher Tabs */}
         {mode !== 'forgot' && (
-          <div className="flex p-1 rounded-2xl bg-white border border-[#E9DFDC] mb-5 text-xs font-bold">
+          <div className="flex p-1 rounded-2xl bg-[var(--mc-chip-bg)] border border-[var(--mc-chip-border)] mb-5 text-xs font-bold relative z-10">
             <button
               type="button"
               onClick={() => {
                 setMode('login');
                 setAuthError('');
               }}
-              className={`flex-1 py-2 rounded-xl transition-all ${
+              className={`flex-1 py-2 rounded-xl transition-all cursor-pointer ${
                 mode === 'login'
-                  ? 'bg-[#9F5F6E] text-white shadow-2xs'
-                  : 'text-[#766D72] hover:text-[#352F35]'
+                  ? 'bg-[var(--mc-btn-gradient)] text-white shadow-xs font-bold'
+                  : 'text-[var(--mc-text-secondary)] hover:text-[var(--mc-text-primary)]'
               }`}
             >
               {t.login}
@@ -209,10 +195,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 setMode('signup');
                 setAuthError('');
               }}
-              className={`flex-1 py-2 rounded-xl transition-all ${
+              className={`flex-1 py-2 rounded-xl transition-all cursor-pointer ${
                 mode === 'signup'
-                  ? 'bg-[#9F5F6E] text-white shadow-2xs'
-                  : 'text-[#766D72] hover:text-[#352F35]'
+                  ? 'bg-[var(--mc-btn-gradient)] text-white shadow-xs font-bold'
+                  : 'text-[var(--mc-text-secondary)] hover:text-[var(--mc-text-primary)]'
               }`}
             >
               {t.createAccount}
@@ -222,8 +208,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Auth Error Display */}
         {authError && (
-          <div className="mb-4 p-3 rounded-2xl bg-[#FFF0F2] border border-[#FADADD] text-xs font-medium text-[#C62828] flex items-start gap-2 animate-in fade-in">
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="mb-4 p-3 rounded-2xl bg-[#2E0B16] border border-[#FF003C]/50 text-xs font-medium text-[#FF5277] flex items-start gap-2 animate-in fade-in shadow-[0_0_10px_rgba(255,0,60,0.3)]">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-[#FF003C]" />
             <span>{authError}</span>
           </div>
         )}
@@ -231,10 +217,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Password Reset Success */}
         {resetSuccess ? (
           <div className="space-y-4 text-center py-2 animate-in fade-in">
-            <div className="w-10 h-10 rounded-2xl bg-[#E8F5E9] text-[#2E7D32] flex items-center justify-center mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-[#0C241B] border border-[#10E599]/50 text-[#10E599] flex items-center justify-center mx-auto shadow-[0_0_12px_rgba(16,229,153,0.3)]">
               <CheckCircle2 className="w-6 h-6" />
             </div>
-            <p className="text-xs text-[#352F35] font-semibold">
+            <p className="text-xs text-[#FFF0F6] font-semibold">
               {t.resetSentNotice}
             </p>
             <button
@@ -243,7 +229,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 setMode('login');
                 setResetSuccess(false);
               }}
-              className="w-full py-3 rounded-xl bg-[#9F5F6E] text-white text-xs font-bold"
+              className="w-full py-3 rounded-xl cyber-gradient-btn text-white text-xs font-bold"
             >
               {t.backToLogin}
             </button>
@@ -252,18 +238,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           /* Forgot Password Form */
           <form onSubmit={handleResetPassword} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-[#352F35] mb-1">
+              <label className="block text-xs font-bold text-[#FFF0F6] mb-1 font-mono">
                 {t.emailLabel}
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-[#766D72]" />
+                <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-[#A38495]" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
                   required
-                  className="w-full pl-10 pr-3.5 py-3 rounded-2xl bg-white border border-[#E9DFDC] text-xs text-[#352F35] focus:outline-hidden focus:border-[#9F5F6E]"
+                  className="w-full pl-10 pr-3.5 py-3 rounded-2xl bg-[#1D0D24] border border-[#FF1A75]/30 text-xs text-[#FFF0F6] placeholder-[#A38495] focus:outline-hidden focus:border-[#FF1A75] focus:shadow-[0_0_10px_rgba(255,26,117,0.3)]"
                 />
               </div>
             </div>
@@ -271,7 +257,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3.5 rounded-2xl bg-[#9F5F6E] hover:bg-[#8F525F] text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-1.5 disabled:opacity-40"
+              className="w-full py-3.5 rounded-2xl cyber-gradient-btn text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-1.5 disabled:opacity-40"
             >
               <span>{isLoading ? '...' : t.sendResetLink}</span>
             </button>
@@ -282,7 +268,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 setMode('login');
                 setAuthError('');
               }}
-              className="w-full text-center text-xs font-semibold text-[#766D72] hover:text-[#9F5F6E] pt-1"
+              className="w-full text-center text-xs font-semibold text-[#E3BCCC] hover:text-[#FF1A75] pt-1"
             >
               {t.backToLogin}
             </button>
@@ -295,7 +281,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               onClick={handleGoogleAuth}
               disabled={isLoading}
               type="button"
-              className="w-full py-3 px-4 rounded-2xl bg-white hover:bg-[#FCF8F6] border border-[#E9DFDC] text-xs font-bold text-[#352F35] shadow-2xs transition-all flex items-center justify-center gap-2.5 disabled:opacity-40"
+              className="w-full py-3 px-4 rounded-2xl bg-[#23122A] hover:bg-[#2C1736] border border-[#FF1A75]/35 text-xs font-bold text-[#FFF0F6] shadow-sm transition-all flex items-center justify-center gap-2.5 disabled:opacity-40"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
@@ -318,33 +304,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <span>{t.continueWithGoogle}</span>
             </button>
 
-            <div className="flex items-center gap-2 my-2 text-[10px] text-[#A2969C] uppercase font-bold tracking-wider">
-              <div className="h-px bg-[#E9DFDC] flex-1" />
+            <div className="flex items-center gap-2 my-2 text-[10px] text-[#A38495] uppercase font-bold tracking-wider font-mono">
+              <div className="h-px bg-[#FF1A75]/20 flex-1" />
               <span>{t.orWithEmail}</span>
-              <div className="h-px bg-[#E9DFDC] flex-1" />
+              <div className="h-px bg-[#FF1A75]/20 flex-1" />
             </div>
 
             <form onSubmit={handleEmailAuth} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-bold text-[#352F35] mb-1">
+                <label className="block text-[11px] font-bold text-[#FFF0F6] mb-1 font-mono">
                   {t.emailLabel}
                 </label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 absolute left-3.5 top-3.5 text-[#766D72]" />
+                  <Mail className="w-4 h-4 absolute left-3.5 top-3 text-[#A38495]" />
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="name@example.com"
                     required
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-2xl bg-white border border-[#E9DFDC] text-xs text-[#352F35] focus:outline-hidden focus:border-[#9F5F6E]"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-2xl bg-[#1D0D24] border border-[#FF1A75]/30 text-xs text-[#FFF0F6] placeholder-[#A38495] focus:outline-hidden focus:border-[#FF1A75]"
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-[11px] font-bold text-[#352F35]">
+                  <label className="block text-[11px] font-bold text-[#FFF0F6] font-mono">
                     {t.passwordLabel}
                   </label>
                   {mode === 'login' && (
@@ -354,14 +340,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         setMode('forgot');
                         setAuthError('');
                       }}
-                      className="text-[10px] text-[#9F5F6E] hover:underline font-semibold"
+                      className="text-[10px] text-[#FF1A75] hover:underline font-semibold"
                     >
                       {t.forgotPassword}
                     </button>
                   )}
                 </div>
                 <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-[#766D72]" />
+                  <Lock className="w-4 h-4 absolute left-3.5 top-3 text-[#A38495]" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
@@ -369,12 +355,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="••••••••"
                     required
                     minLength={6}
-                    className="w-full pl-10 pr-10 py-2.5 rounded-2xl bg-white border border-[#E9DFDC] text-xs text-[#352F35] focus:outline-hidden focus:border-[#9F5F6E]"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-2xl bg-[#1D0D24] border border-[#FF1A75]/30 text-xs text-[#FFF0F6] placeholder-[#A38495] focus:outline-hidden focus:border-[#FF1A75]"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-3 text-[#766D72] hover:text-[#352F35]"
+                    className="absolute right-3.5 top-2.5 text-[#A38495] hover:text-[#FFF0F6]"
                     title={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -385,11 +371,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {/* Confirm Password in Sign-up mode */}
               {mode === 'signup' && (
                 <div>
-                  <label className="block text-[11px] font-bold text-[#352F35] mb-1">
+                  <label className="block text-[11px] font-bold text-[#FFF0F6] mb-1 font-mono">
                     {t.confirmPasswordLabel}
                   </label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-[#766D72]" />
+                    <Lock className="w-4 h-4 absolute left-3.5 top-3 text-[#A38495]" />
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       value={confirmPassword}
@@ -397,12 +383,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       placeholder="••••••••"
                       required
                       minLength={6}
-                      className="w-full pl-10 pr-10 py-2.5 rounded-2xl bg-white border border-[#E9DFDC] text-xs text-[#352F35] focus:outline-hidden focus:border-[#9F5F6E]"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-2xl bg-[#1D0D24] border border-[#FF1A75]/30 text-xs text-[#FFF0F6] placeholder-[#A38495] focus:outline-hidden focus:border-[#FF1A75]"
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3.5 top-3 text-[#766D72] hover:text-[#352F35]"
+                      className="absolute right-3.5 top-2.5 text-[#A38495] hover:text-[#FFF0F6]"
                       title={showConfirmPassword ? 'Hide password' : 'Show password'}
                     >
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -414,7 +400,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-3.5 rounded-2xl bg-[#9F5F6E] hover:bg-[#8F525F] active:scale-[0.99] text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 mt-2"
+                className="w-full py-3.5 rounded-2xl cyber-gradient-btn active:scale-[0.99] text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 mt-3 border border-[#FFD1E3]/30"
               >
                 <span>{isLoading ? '...' : mode === 'login' ? t.login : t.createAccount}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -422,7 +408,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </form>
 
             {/* Switch Mode Prompt Link */}
-            <div className="pt-2 text-center text-xs text-[#766D72]">
+            <div className="pt-2 text-center text-xs text-[#E3BCCC]">
               {mode === 'login' ? (
                 <p>
                   Don't have an account?{' '}
@@ -432,7 +418,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       setMode('signup');
                       setAuthError('');
                     }}
-                    className="text-[#9F5F6E] font-bold hover:underline"
+                    className="text-[#FF1A75] font-bold hover:underline"
                   >
                     {t.createAccount}
                   </button>
@@ -446,7 +432,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       setMode('login');
                       setAuthError('');
                     }}
-                    className="text-[#9F5F6E] font-bold hover:underline"
+                    className="text-[#FF1A75] font-bold hover:underline"
                   >
                     {t.login}
                   </button>

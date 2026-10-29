@@ -26,6 +26,7 @@ import { getRecentCheckins } from '../../services/firebase/checkinService';
 import { getRecentSymptoms } from '../../services/firebase/symptomService';
 import { getCareTasks, getAppointments } from '../../services/firebase/careService';
 import { useTranslation, type Language } from '../../translations';
+import { ThemeSelector } from '../../components/ThemeSelector';
 
 interface ProfileScreenProps {
   profile: UserProfile | null;
@@ -172,18 +173,38 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   return (
     <div className="space-y-4 pb-20 animate-in fade-in">
+      {/* 1. TOP SECTION: Choose your MomCare look */}
+      <div className="bg-[var(--mc-card)] rounded-3xl p-5 border-2 border-[var(--mc-card-border)] shadow-[var(--mc-glow)] space-y-3.5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-2xl bg-[var(--mc-btn-gradient)] flex items-center justify-center text-white shadow-xs">
+            <span className="text-xl">🎨</span>
+          </div>
+          <div>
+            <h2 className="font-extrabold text-base text-[var(--mc-text-primary)]">
+              Choose your MomCare look
+            </h2>
+            <p className="text-xs text-[var(--mc-text-secondary)] font-mono">
+              Switch between Neon Blue and Neon Pink, with Dark or Light mode
+            </p>
+          </div>
+        </div>
+
+        {/* Two large preview cards and Dark/Light switch below them */}
+        <ThemeSelector profile={profile} />
+      </div>
+
       {/* Header Card */}
-      <div className="bg-[#FFFFFF] rounded-2xl p-4 sm:p-5 border border-[#E9DFDC] shadow-2xs flex items-center justify-between">
+      <div className="bg-[var(--mc-card)] rounded-2xl p-4 sm:p-5 border border-[var(--mc-card-border)] shadow-2xs flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[#F2E1E3] flex items-center justify-center text-lg font-bold text-[#9F5F6E]">
+          <div className="w-12 h-12 rounded-2xl bg-[var(--mc-chip-bg)] border border-[var(--mc-chip-border)] flex items-center justify-center text-lg font-bold text-[var(--mc-primary)]">
             {displayName.charAt(0) || 'M'}
           </div>
           <div>
-            <h2 className="font-bold text-base text-[#352F35]">
+            <h2 className="font-bold text-base text-[var(--mc-text-primary)]">
               {preferredName || displayName || 'MomCare Member'}
             </h2>
-            <p className="text-xs text-[#766D72]">{profile?.email || 'Logged In Account'}</p>
-            <span className="text-[10px] font-semibold text-[#9F5F6E] bg-[#F2E1E3] px-2 py-0.5 rounded-full inline-block mt-0.5">
+            <p className="text-xs text-[var(--mc-text-secondary)]">{profile?.email || 'Logged In Account'}</p>
+            <span className="text-[10px] font-semibold text-[var(--mc-primary)] bg-[var(--mc-chip-bg)] border border-[var(--mc-chip-border)] px-2 py-0.5 rounded-full inline-block mt-0.5">
               Week {pregnancyWeek} with {babyNickname || t.yourBaby}
             </span>
           </div>
@@ -194,7 +215,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             await logoutUser();
             onLogout();
           }}
-          className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[#E9DFDC] text-[#766D72] hover:text-[#C96B6B] text-xs font-semibold hover:bg-[#FAEAEA] transition-colors"
+          className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-[var(--mc-card-border)] text-[var(--mc-text-secondary)] hover:text-[#C96B6B] text-xs font-semibold hover:bg-[var(--mc-chip-bg)] transition-colors cursor-pointer"
         >
           <LogOut className="w-3.5 h-3.5" />
           <span>{t.logoutBtn}</span>
@@ -347,12 +368,38 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </div>
         </div>
 
+        {/* MomCare Look & Theme Settings */}
+        <div className="cyber-card rounded-2xl p-4 sm:p-5 shadow-sm space-y-3">
+          <div className="flex items-center gap-2 text-[var(--mc-primary)]">
+            <Sparkles className="w-4 h-4" />
+            <h3 className="font-bold text-sm text-[var(--mc-text-primary)]">
+              Choose your MomCare look
+            </h3>
+          </div>
+          <p className="text-xs text-[var(--mc-text-muted)]">
+            Select your preferred theme and mode. Changes apply immediately and save to your profile.
+          </p>
+
+          <ThemeSelector
+            onThemeSelect={(newTheme) => {
+              if (profile?.id) {
+                updateUserProfile(profile.id, { theme: newTheme });
+              }
+            }}
+            onModeSelect={(newMode) => {
+              if (profile?.id) {
+                updateUserProfile(profile.id, { colorMode: newMode });
+              }
+            }}
+          />
+        </div>
+
         {/* Save Changes Button with Feedback */}
         <div className="flex items-center gap-3">
           <button
             type="submit"
             disabled={isSaving}
-            className="flex-1 py-3 px-4 rounded-xl bg-[#9F5F6E] hover:bg-[#8F525F] text-white text-xs font-bold transition-all shadow-2xs flex items-center justify-center gap-2"
+            className="flex-1 py-3 px-4 rounded-xl cyber-gradient-btn text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
           >
             <Save className="w-4 h-4" />
             <span>{isSaving ? t.savingChanges : t.saveChanges}</span>

@@ -180,118 +180,167 @@ export const PregnancyScreen: React.FC<PregnancyScreenProps> = ({
 
             {/* BABY Content Card */}
             {activeSection === 'baby' && (
-              <div className="bg-[#FFFFFF] rounded-2xl p-4 sm:p-5 border border-[#E9DFDC] shadow-2xs space-y-4 animate-in fade-in">
-                {/* Real Photo of Baby in Mother's Womb */}
-                <div className="rounded-2xl overflow-hidden border border-[#E9DFDC] relative group shadow-inner">
-                  <div className="h-44 sm:h-52 w-full relative">
-                    <img
-                      src="/src/assets/images/fetal_womb_render_1790941803084.jpg"
-                      alt={`Photo of baby developing in mother's womb at week ${selectedWeek}`}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#201518]/90 via-[#201518]/25 to-transparent pointer-events-none" />
-                    
-                    <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-xl bg-[#2B1F24]/85 backdrop-blur-md text-[11px] font-semibold text-[#FCF8F6] border border-white/20 flex items-center gap-1.5 shadow-sm">
-                      <Sparkles className="w-3 h-3 text-[#E8B6A3]" />
-                      <span>Week {selectedWeek} Baby in Mother's Womb</span>
-                    </div>
+              <div className="bg-[#FFFFFF] rounded-2xl p-4 sm:p-6 border border-[#E9DFDC] shadow-2xs animate-in fade-in">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* Real Photo of Baby in Mother's Womb (Left on Desktop) */}
+                  <div className="lg:col-span-5 space-y-3">
+                    <div className="rounded-2xl overflow-hidden border border-[#E9DFDC] relative group shadow-inner">
+                      <div className="h-48 sm:h-56 lg:h-64 w-full relative">
+                        <img
+                          src="/src/assets/images/fetal_womb_render_1790941803084.jpg"
+                          alt={`Photo of baby developing in mother's womb at week ${selectedWeek}`}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#201518]/90 via-[#201518]/25 to-transparent pointer-events-none" />
+                        
+                        <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-xl bg-[#2B1F24]/85 backdrop-blur-md text-[11px] font-semibold text-[#FCF8F6] border border-white/20 flex items-center gap-1.5 shadow-sm">
+                          <Sparkles className="w-3 h-3 text-[#E8B6A3]" />
+                          <span>Week {selectedWeek} Baby in Mother's Womb</span>
+                        </div>
 
-                    <div className="absolute bottom-2.5 left-2.5 right-2.5 text-white">
-                      <p className="text-xs font-medium text-[#FCF8F6] drop-shadow-sm">
-                        Baby is {weekData.approxLength} long and weighs approx. {weekData.approxWeight}, nestled securely in clear, temperature-regulated amniotic fluid.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-[#EFEBF4] text-[#7E699B] flex items-center justify-center">
-                    <Baby className="w-4 h-4" />
-                  </div>
-                  <h4 className="font-bold text-sm text-[#352F35]">Baby’s Major Developments This Week</h4>
-                </div>
-
-                <div className="space-y-2">
-                  {weekData.babyHighlights.map((highlight, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#FCF8F6] border border-[#E9DFDC]/60">
-                      <div className="w-4 h-4 rounded-full bg-[#B7A6C9]/30 text-[#7E699B] flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                        {idx + 1}
+                        <div className="absolute bottom-2.5 left-2.5 right-2.5 text-white">
+                          <p className="text-xs font-medium text-[#FCF8F6] drop-shadow-sm">
+                            Baby is {weekData.approxLength} long and weighs approx. {weekData.approxWeight}.
+                          </p>
+                        </div>
                       </div>
-                      <p className="text-xs text-[#352F35] leading-relaxed">{highlight}</p>
                     </div>
-                  ))}
-                </div>
 
-                <button
-                  onClick={() => onOpenAiChat(`Tell me more about baby's sensory and brain development in Week ${selectedWeek}.`)}
-                  className="w-full mt-2 py-2 rounded-xl bg-[#EFEBF4] text-[#7E699B] text-xs font-semibold hover:bg-[#E2D8EA] transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Ask AI about baby’s week {selectedWeek} milestones</span>
-                </button>
+                    <div className="p-3 rounded-xl bg-[#FCF8F6] border border-[#E9DFDC] text-xs text-[#766D72]">
+                      <span className="font-bold text-[#352F35] block mb-1">Amniotic Fluid</span>
+                      <p>Nestled securely in temperature-regulated fluid with developing sensory awareness.</p>
+                    </div>
+                  </div>
+
+                  {/* Baby Developments (Right on Desktop) */}
+                  <div className="lg:col-span-7 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-xl bg-[#EFEBF4] text-[#7E699B] flex items-center justify-center">
+                        <Baby className="w-4 h-4" />
+                      </div>
+                      <h4 className="font-bold text-sm sm:text-base text-[#352F35]">Baby’s Major Developments This Week</h4>
+                    </div>
+
+                    <div className="space-y-2">
+                      {weekData.babyHighlights.map((highlight, idx) => (
+                        <div key={idx} className="flex items-start gap-2.5 p-3 rounded-xl bg-[#FCF8F6] border border-[#E9DFDC]/60">
+                          <div className="w-5 h-5 rounded-full bg-[#B7A6C9]/30 text-[#7E699B] flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                            {idx + 1}
+                          </div>
+                          <p className="text-xs sm:text-sm text-[#352F35] leading-relaxed">{highlight}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => onOpenAiChat(`Tell me more about baby's sensory and brain development in Week ${selectedWeek}.`)}
+                      className="w-full mt-2 py-2.5 rounded-xl bg-[#EFEBF4] text-[#7E699B] text-xs font-semibold hover:bg-[#E2D8EA] transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Ask AI about baby’s week {selectedWeek} milestones</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
             {/* MOM Content Card */}
             {activeSection === 'mom' && (
-              <div className="bg-[#FFFFFF] rounded-2xl p-4 sm:p-5 border border-[#E9DFDC] shadow-2xs space-y-3 animate-in fade-in">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-[#F2E1E3] text-[#9F5F6E] flex items-center justify-center">
-                    <Heart className="w-4 h-4" />
-                  </div>
-                  <h4 className="font-bold text-sm text-[#352F35]">Mother’s Body & Emotional Adaptations</h4>
-                </div>
-
-                <div className="space-y-2">
-                  {weekData.motherChanges.map((change, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#FCF8F6] border border-[#E9DFDC]/60">
-                      <div className="w-4 h-4 rounded-full bg-[#C98291]/30 text-[#9F5F6E] flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                        {idx + 1}
+              <div className="bg-[#FFFFFF] rounded-2xl p-4 sm:p-6 border border-[#E9DFDC] shadow-2xs animate-in fade-in">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* Left Column: Maternal Status Illustration */}
+                  <div className="lg:col-span-5 space-y-3">
+                    <div className="p-6 rounded-2xl bg-gradient-to-br from-[#FFF5F7] to-[#F2E1E3] border border-[#FADADD] text-center space-y-2">
+                      <div className="w-16 h-16 rounded-2xl bg-white text-[#9F5F6E] flex items-center justify-center mx-auto shadow-2xs">
+                        <Heart className="w-8 h-8 fill-current/20 stroke-[2.2]" />
                       </div>
-                      <p className="text-xs text-[#352F35] leading-relaxed">{change}</p>
+                      <h4 className="font-black text-sm text-[#352F35]">Week {selectedWeek} Maternal Wellness</h4>
+                      <p className="text-xs text-[#766D72]">Your uterus, blood volume, and metabolism are adapting smoothly.</p>
                     </div>
-                  ))}
-                </div>
 
-                <button
-                  onClick={() => onOpenAiChat(`What comfort strategies help with body changes during Week ${selectedWeek}?`)}
-                  className="w-full mt-2 py-2 rounded-xl bg-[#F2E1E3] text-[#9F5F6E] text-xs font-semibold hover:bg-[#E9D1D5] transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>Ask AI about maternal changes in week {selectedWeek}</span>
-                </button>
+                    <div className="p-3 rounded-xl bg-[#FCF8F6] border border-[#E9DFDC] text-xs text-[#766D72]">
+                      <span className="font-bold text-[#352F35] block mb-1">Comfort Guidance</span>
+                      <p>Side-lying rest with pelvic support cushions relieves lumbar and sciatic strain.</p>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Adaptations list & AI Guidance */}
+                  <div className="lg:col-span-7 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-xl bg-[#F2E1E3] text-[#9F5F6E] flex items-center justify-center">
+                        <Heart className="w-4 h-4" />
+                      </div>
+                      <h4 className="font-bold text-sm sm:text-base text-[#352F35]">Mother’s Body & Emotional Adaptations</h4>
+                    </div>
+
+                    <div className="space-y-2">
+                      {weekData.motherChanges.map((change, idx) => (
+                        <div key={idx} className="flex items-start gap-2.5 p-3 rounded-xl bg-[#FCF8F6] border border-[#E9DFDC]/60">
+                          <div className="w-5 h-5 rounded-full bg-[#C98291]/30 text-[#9F5F6E] flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                            {idx + 1}
+                          </div>
+                          <p className="text-xs sm:text-sm text-[#352F35] leading-relaxed">{change}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={() => onOpenAiChat(`What comfort strategies help with body changes during Week ${selectedWeek}?`)}
+                      className="w-full mt-2 py-2.5 rounded-xl bg-[#F2E1E3] text-[#9F5F6E] text-xs font-semibold hover:bg-[#E9D1D5] transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Ask AI about maternal changes in week {selectedWeek}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
             {/* CARE Content Card */}
             {activeSection === 'care' && (
-              <div className="bg-[#FFFFFF] rounded-2xl p-4 sm:p-5 border border-[#E9DFDC] shadow-2xs space-y-3 animate-in fade-in">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-xl bg-[#F9ECE7] text-[#B87A63] flex items-center justify-center">
-                    <ShieldCheck className="w-4 h-4" />
+              <div className="bg-[#FFFFFF] rounded-2xl p-4 sm:p-6 border border-[#E9DFDC] shadow-2xs animate-in fade-in">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  {/* Left Column: Care Card */}
+                  <div className="lg:col-span-5 space-y-3">
+                    <div className="p-6 rounded-2xl bg-gradient-to-br from-[#FFF9F6] to-[#F9ECE7] border border-[#E8B6A3]/40 text-center space-y-2">
+                      <div className="w-16 h-16 rounded-2xl bg-white text-[#B87A63] flex items-center justify-center mx-auto shadow-2xs">
+                        <ShieldCheck className="w-8 h-8 stroke-[2.2]" />
+                      </div>
+                      <h4 className="font-black text-sm text-[#352F35]">Week {selectedWeek} Prenatal Protocol</h4>
+                      <p className="text-xs text-[#766D72]">Targeted hydration, nutritional supplements, and antenatal screening review.</p>
+                    </div>
                   </div>
-                  <h4 className="font-bold text-sm text-[#352F35]">Care Focus & Provider Questions</h4>
-                </div>
 
-                <div className="space-y-2">
-                  <span className="text-[11px] font-semibold text-[#766D72] uppercase">This Week’s Care Focus</span>
-                  {weekData.careFocus.map((care, idx) => (
-                    <div key={idx} className="flex items-start gap-2 p-2 rounded-xl bg-[#FCF8F6] border border-[#E9DFDC]/60 text-xs text-[#352F35]">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-[#7FA58B] shrink-0 mt-0.5" />
-                      <span>{care}</span>
+                  {/* Right Column: Focus & Provider questions */}
+                  <div className="lg:col-span-7 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-xl bg-[#F9ECE7] text-[#B87A63] flex items-center justify-center">
+                        <ShieldCheck className="w-4 h-4" />
+                      </div>
+                      <h4 className="font-bold text-sm sm:text-base text-[#352F35]">Care Focus & Provider Questions</h4>
                     </div>
-                  ))}
-                </div>
 
-                <div className="space-y-2 pt-2 border-t border-[#E9DFDC]">
-                  <span className="text-[11px] font-semibold text-[#766D72] uppercase">Questions to Ask Your Doctor / Midwife</span>
-                  {weekData.doctorQuestions.map((q, idx) => (
-                    <div key={idx} className="flex items-start gap-2 p-2 rounded-xl bg-[#FAF4E9] border border-[#F3DFC0] text-xs text-[#352F35]">
-                      <HelpCircle className="w-3.5 h-3.5 text-[#D5A85C] shrink-0 mt-0.5" />
-                      <span>{q}</span>
+                    <div className="space-y-2">
+                      <span className="text-[11px] font-semibold text-[#766D72] uppercase">This Week’s Care Focus</span>
+                      {weekData.careFocus.map((care, idx) => (
+                        <div key={idx} className="flex items-start gap-2 p-3 rounded-xl bg-[#FCF8F6] border border-[#E9DFDC]/60 text-xs sm:text-sm text-[#352F35]">
+                          <CheckCircle2 className="w-4 h-4 text-[#7FA58B] shrink-0 mt-0.5" />
+                          <span>{care}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+
+                    <div className="space-y-2 pt-2 border-t border-[#E9DFDC]">
+                      <span className="text-[11px] font-semibold text-[#766D72] uppercase">Questions to Ask Your Doctor / Midwife</span>
+                      {weekData.doctorQuestions.map((q, idx) => (
+                        <div key={idx} className="flex items-start gap-2 p-3 rounded-xl bg-[#FAF4E9] border border-[#F3DFC0] text-xs text-[#352F35]">
+                          <HelpCircle className="w-4 h-4 text-[#D5A85C] shrink-0 mt-0.5" />
+                          <span>{q}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

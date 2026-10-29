@@ -1,21 +1,66 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, AlertCircle, BookOpen, Clock, ShieldCheck, HeartHandshake } from 'lucide-react';
-import { requestContextualChat } from '../services/ai/client';
+import {
+  Send,
+  X,
+  Phone,
+  PhoneCall,
+  AlertTriangle,
+  CheckCircle,
+  HelpCircle,
+  Sparkles,
+  Heart,
+  ChevronDown,
+  Minimize2,
+  Maximize2,
+  RotateCcw,
+  BookOpen,
+} from 'lucide-react';
+import { requestContextualChat, type ChatActionPayload } from '../services/ai/client';
 import { buildRelevantContext } from '../services/context/contextRetriever';
-import type { UserProfile, Checkin, SymptomRecord, Medication, Appointment, AiConversationMessage } from '../types';
-import { RiskBadge } from './RiskBadge';
+import {
+  checkFixedDangerKeywords,
+  parseLocalCommand,
+  isUserAffirmative,
+  isUserNegative,
+  getConfirmationPrompt,
+  getActionSuccessMessage,
+  getActionCancelMessage,
+  type AppAction,
+  type AppActionType,
+} from '../services/ai/commandEngine';
+import { getKnowledgeNoteById } from '../config/knowledgeNotes';
+import { useTheme } from '../context/ThemeContext';
+import type { UserProfile, Checkin, SymptomRecord, Medication, Appointment } from '../types';
 
-interface AiChatModalProps {
+export interface AiChatModalProps {
   isOpen: boolean;
   onClose: () => void;
   profile: UserProfile | null;
   pregnancyWeek: number;
   recentCheckins: Checkin[];
   recentSymptoms: SymptomRecord[];
-  medications: Medication[];
-  appointments: Appointment[];
+  medications?: Medication[];
+  appointments?: Appointment[];
   initialPrompt?: string;
-  language?: 'en' | 'ta' | 'hi';
+  language?: string;
+  onExecuteAction?: (action: AppAction) => void;
+  onOpenBreathing?: () => void;
+}
+
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  sourceIds?: string[];
+  uncertain?: boolean;
+  urgent?: boolean;
+  followUps?: string[];
+  pendingAction?: AppAction | null;
+  dangerAlert?: {
+    reason: string;
+    doctorPhone: string;
+  } | null;
+  timestamp: string;
 }
 
 export const AiChatModal: React.FC<AiChatModalProps> = ({
@@ -25,63 +70,240 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
   pregnancyWeek,
   recentCheckins,
   recentSymptoms,
-  medications,
-  appointments,
+  medications = [],
+  appointments = [],
   initialPrompt,
   language = 'en',
+  onExecuteAction,
+  onOpenBreathing,
 }) => {
-  const motherName = profile?.preferredName || profile?.displayName || 'there';
-
-  const welcomeContent =
-    language === 'ta'
-      ? `வணக்கம் ${motherName} 💗 நான் மாம்கேர், உங்கள் கர்ப்ப கால துணை. நீங்கள் இப்போது கர்ப்பத்தின் ${pregnancyWeek}-வது வாரத்தில் இருக்கிறீர்கள். இன்று உங்களுக்கு நான் எப்படி உதவலாம்?`
-      : language === 'hi'
-      ? `नमस्ते ${motherName} 💗 मैं मॉमकेयर हूँ, आपकी गर्भावस्था साथी। आप अपनी गर्भावस्था के ${pregnancyWeek}वें हफ्ते में हैं। आज मैं आपकी क्या मदद कर सकती हूँ?`
-      : `Hello ${motherName} 💗 I'm MomCare, your personal pregnancy companion. I'm aware you are in Week ${pregnancyWeek} of your pregnancy journey. How can I support you today?`;
-
-  const [messages, setMessages] = useState<AiConversationMessage[]>([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      content: welcomeContent,
-      riskLevel: 'green',
-      sources: ['ACOG Guidelines', 'NHS Maternity Services'],
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    },
-  ]);
-  const [input, setInput] = useState(initialPrompt || '');
+  const { theme, colorMode } = useTheme();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [activePendingAction, setActivePendingAction] = useState<AppAction | null>(null);
+  const [isMinimizedBubble, setIsMinimizedBubble] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (initialPrompt && isOpen) {
-      setInput(initialPrompt);
-    }
-  }, [initialPrompt, isOpen]);
+  const lang = (language as 'en' | 'ta' | 'hi') || 'en';
+  const motherName = profile?.displayName || profile?.preferredName || (lang === 'ta' ? 'அம்மா' : lang === 'hi' ? 'दीदी' : 'Sister');
+  const babyNickname = profile?.babyNickname || (lang === 'ta' ? 'உங்கள் குழந்தை' : lang === 'hi' ? 'आपका बच्चा' : 'your baby');
+  const doctorPhone = profile?.emergencyContact || profile?.familyContactPhone || profile?.doctorPhone || '108';
+
+  // Load chat history from localStorage
+  const storageKey = `momcare_chat_history_${profile?.id || 'default'}`;
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoading]);
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+          return;
+        }
+      }
+    } catch {
+      // Ignore localStorage parse error
+    }
+
+    // Default welcome message in mom-style
+    const welcomeByLang: Record<'en' | 'ta' | 'hi', string> = {
+      en: `Hello dear ${motherName}, I'm right here beside you for Week ${pregnancyWeek}. How are you and ${babyNickname} feeling today? You can ask me any question or tell me what to open in MomCare.`,
+      ta: `வணக்கம் அன்பு ${motherName}, கர்ப்பத்தின் ${pregnancyWeek}-வது வாரத்தில் உங்களுடன் துணையாக இருக்கிறேன். நீங்களும் ${babyNickname}-ம் இன்று எப்படி இருக்கிறீர்கள்? உங்கள் சந்தேகங்களைக் கேட்கலாம் அல்லது MomCare-ல் தேவையான பகுதியைத் திறக்கச் சொல்லலாம்.`,
+      hi: `नमस्ते प्यारी ${motherName}, मैं गर्भावस्था के ${pregnancyWeek}वें हफ्ते में आपके साथ हूँ। आज आप और ${babyNickname} कैसा महसूस कर रहे हैं? मुझसे कोई भी सवाल पूछें या ऐप में कुछ भी खोलने को कहें।`,
+    };
+
+    setMessages([
+      {
+        id: 'welcome_1',
+        role: 'assistant',
+        content: welcomeByLang[lang] || welcomeByLang.en,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
+  }, [profile?.id, lang]);
+
+  // Persist messages to localStorage
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(messages.slice(-30)));
+      } catch {
+        // quota exceeded or storage disabled
+      }
+    }
+  }, [messages, storageKey]);
+
+  // Scroll to bottom
+  useEffect(() => {
+    if (isOpen && !isMinimizedBubble) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isLoading, isOpen, isMinimizedBubble]);
+
+  // Initial prompt trigger
+  useEffect(() => {
+    if (isOpen && initialPrompt) {
+      handleSend(initialPrompt);
+    }
+  }, [isOpen, initialPrompt]);
 
   if (!isOpen) return null;
 
-  const handleSend = async (textToSend?: string) => {
-    const text = (textToSend || input).trim();
-    if (!text || isLoading) return;
+  // Example action chips for first screen
+  const exampleChips = [
+    {
+      labelEn: 'Open Baby Development',
+      labelTa: 'குழந்தை வளர்ச்சியைத் திற',
+      labelHi: 'शिशु विकास खोलें',
+      prompt: lang === 'ta' ? 'குழந்தை வளர்ச்சியைத் திற' : lang === 'hi' ? 'शिशु विकास खोलें' : 'Open baby development',
+    },
+    {
+      labelEn: 'Start Breathing Exercise',
+      labelTa: 'சுவாசப் பயிற்சி தொடங்கு',
+      labelHi: 'सांस का अभ्यास शुरू करें',
+      prompt: lang === 'ta' ? 'சுவாசப் பயிற்சி தொடங்கு' : lang === 'hi' ? 'शांत श्वास अभ्यास शुरू करें' : 'Start breathing exercise',
+    },
+    {
+      labelEn: theme === 'neon-pink' ? 'Change to Neon Blue' : 'Change to Neon Pink',
+      labelTa: theme === 'neon-pink' ? 'நீல நிறத்திற்கு மாற்று' : 'இளஞ்சிவப்பு நிறத்திற்கு மாற்று',
+      labelHi: theme === 'neon-pink' ? 'नियॉन ब्लू में बदलें' : 'नियॉन पिंक में बदलें',
+      prompt: theme === 'neon-pink' ? 'Change theme to neon blue' : 'Change theme to neon pink',
+    },
+    {
+      labelEn: 'Switch to தமிழ்',
+      labelTa: 'Switch to English',
+      labelHi: 'तमिल में बदलें',
+      prompt: lang === 'ta' ? 'Switch to English' : 'Switch to Tamil',
+    },
+    {
+      labelEn: 'Print Doctor Summary',
+      labelTa: 'மருத்துவர் சுருக்கம் அச்சிடு',
+      labelHi: 'डॉक्टर रिपोर्ट प्रिंट करें',
+      prompt: lang === 'ta' ? 'மருத்துவர் சுருக்கம் அச்சிடு' : lang === 'hi' ? 'डॉक्टर सारांश प्रिंट करें' : 'Print doctor summary',
+    },
+  ];
 
-    const userMsg: AiConversationMessage = {
-      id: `usr_${Date.now()}`,
-      role: 'user',
-      content: text,
+  // Execute an approved action
+  const executeActionConfirmed = (action: AppAction) => {
+    setActivePendingAction(null);
+
+    // Call execution callback
+    if (action.type === 'start_breathing') {
+      if (onOpenBreathing) {
+        onOpenBreathing();
+      }
+    } else if (onExecuteAction) {
+      onExecuteAction(action);
+    }
+
+    // Add confirmation message
+    const confirmText = getActionSuccessMessage(action, lang);
+    const confirmMsg: ChatMessage = {
+      id: `act_${Date.now()}`,
+      role: 'assistant',
+      content: confirmText,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
+    setMessages((prev) => [...prev, confirmMsg]);
 
+    // On mobile, shrink to floating bubble so user can view screen
+    if (window.innerWidth < 1024) {
+      setIsMinimizedBubble(true);
+    }
+  };
+
+  // Cancel a pending action
+  const cancelActionConfirmed = () => {
+    setActivePendingAction(null);
+    const cancelMsg: ChatMessage = {
+      id: `canc_${Date.now()}`,
+      role: 'assistant',
+      content: getActionCancelMessage(lang),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+    setMessages((prev) => [...prev, cancelMsg]);
+  };
+
+  // Main Send Handler
+  const handleSend = async (textToSend?: string) => {
+    const rawQuery = (textToSend || input).trim();
+    if (!rawQuery) return;
+
+    if (!textToSend) setInput('');
+
+    // Append user message
+    const userMsg: ChatMessage = {
+      id: `u_${Date.now()}`,
+      role: 'user',
+      content: rawQuery,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
     setMessages((prev) => [...prev, userMsg]);
-    setInput('');
+
+    // Check if user is answering a pending Yes/No action
+    if (activePendingAction) {
+      if (isUserAffirmative(rawQuery)) {
+        executeActionConfirmed(activePendingAction);
+        return;
+      }
+      if (isUserNegative(rawQuery)) {
+        cancelActionConfirmed();
+        return;
+      }
+    }
+
+    // PART 3: FIXED SAFETY CHECK FIRST (NO AI)
+    const dangerCheck = checkFixedDangerKeywords(rawQuery);
+    if (dangerCheck.isDanger) {
+      const dangerReplies: Record<'en' | 'ta' | 'hi', string> = {
+        en: 'Sister, this needs medical attention right away. Please do not wait.',
+        ta: 'அம்மா, இதற்கு உடனடியாக மருத்துவ கவனிப்பு தேவை. தயவுசெய்து தாமதிக்காதீர்கள்.',
+        hi: 'दीदी, इस पर तुरंत डॉक्टर का ध्यान जरूरी है। कृपया बिल्कुल भी देर न करें।',
+      };
+
+      const dangerMsg: ChatMessage = {
+        id: `dang_${Date.now()}`,
+        role: 'assistant',
+        content: dangerReplies[lang] || dangerReplies.en,
+        dangerAlert: {
+          reason: dangerCheck.dangerReason,
+          doctorPhone,
+        },
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, dangerMsg]);
+      return;
+    }
+
+    // PART 4: LOCAL COMMAND DETECTION BEFORE AI
+    const localAction = parseLocalCommand(rawQuery);
+    if (localAction) {
+      if (localAction.isEmergencyImmediate) {
+        // Immediate emergency calls bypass Yes/No
+        if (onExecuteAction) onExecuteAction(localAction);
+        return;
+      }
+
+      // Prompt Yes/No confirmation
+      setActivePendingAction(localAction);
+      const questionText = getConfirmationPrompt(localAction, lang);
+      const promptMsg: ChatMessage = {
+        id: `ask_${Date.now()}`,
+        role: 'assistant',
+        content: questionText,
+        pendingAction: localAction,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, promptMsg]);
+      return;
+    }
+
+    // PART 2: GROUNDED GEMINI AI CALL
     setIsLoading(true);
 
     try {
-      // Build relevant context layer (does NOT dump entire DB)
       const patientContext = buildRelevantContext({
         profile,
         currentWeek: pregnancyWeek,
@@ -89,39 +311,69 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
         recentSymptoms,
         medications,
         appointments,
-        queryText: text,
+        queryText: rawQuery,
       });
 
-      const conversationHistory = messages.map((m) => ({
+      // Pass mother name & baby nickname for mom-style personality
+      const enrichedContext = {
+        ...patientContext,
+        motherName,
+        babyNickname,
+      };
+
+      const conversationHistory = messages.slice(-6).map((m) => ({
         role: m.role,
         content: m.content,
       }));
 
       const res = await requestContextualChat({
-        message: text,
+        message: rawQuery,
         conversationHistory,
         pregnancyWeek,
-        patientContext,
-        language,
+        patientContext: enrichedContext,
+        language: lang,
       });
 
-      const assistantMsg: AiConversationMessage = {
-        id: `ast_${Date.now()}`,
+      // Check if AI suggested an action
+      let actionToPropose: AppAction | null = null;
+      if (res.action && typeof res.action.type === 'string') {
+        actionToPropose = {
+          type: res.action.type as AppActionType,
+          descriptionEn: res.action.descriptionEn || 'App action',
+          descriptionTa: res.action.descriptionTa || 'செயல்',
+          descriptionHi: res.action.descriptionHi || 'कार्य',
+          payload: res.action.payload,
+        };
+      }
+
+      const assistantMsg: ChatMessage = {
+        id: `a_${Date.now()}`,
         role: 'assistant',
         content: res.reply,
-        riskLevel: res.riskLevel,
-        sources: res.sources,
+        sourceIds: res.sourceIds,
+        uncertain: res.uncertain,
+        urgent: res.urgent,
+        followUps: res.followUps,
+        pendingAction: actionToPropose,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
+      if (actionToPropose) {
+        setActivePendingAction(actionToPropose);
+      }
+
       setMessages((prev) => [...prev, assistantMsg]);
-    } catch (err: any) {
-      const errorMsg: AiConversationMessage = {
+    } catch (err) {
+      const fallbackReplies: Record<'en' | 'ta' | 'hi', string> = {
+        en: "I'm having trouble answering right now. Please try again. If you feel unwell, call your doctor.",
+        ta: 'பதில் அளிப்பதில் சிறிது தாமதம் ஏற்படுகிறது. தயவுசெய்து மீண்டும் முயற்சிக்கவும். உங்களுக்கு உடல்நலக்குறைவு ஏற்பட்டால் உடனே மருத்துவரை அழைக்கவும்.',
+        hi: 'मुझे अभी जवाब देने में परेशानी हो रही है। कृपया पुनः प्रयास करें। यदि आप अस्वस्थ महसूस कर रही हैं, तो अपने डॉक्टर को कॉल करें।',
+      };
+
+      const errorMsg: ChatMessage = {
         id: `err_${Date.now()}`,
         role: 'assistant',
-        content: 'I had a momentary connection hiccup. Remember, if you are experiencing severe pain, vaginal bleeding, or decreased fetal movement, please reach out directly to your obstetrician or maternity triage line.',
-        riskLevel: 'yellow',
-        sources: ['ACOG'],
+        content: fallbackReplies[lang] || fallbackReplies.en,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, errorMsg]);
@@ -130,88 +382,285 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
     }
   };
 
-  const quickQuestions = [
-    'Is mild cramping normal in Week 24?',
-    'How do I count baby kicks today?',
-    'What should I eat when experiencing heartburn?',
-    'Can you explain my last check-in pattern?',
-  ];
+  const clearChatHistory = () => {
+    localStorage.removeItem(storageKey);
+    const welcomeByLang: Record<'en' | 'ta' | 'hi', string> = {
+      en: `Hello dear ${motherName}, how can I help you and ${babyNickname} right now?`,
+      ta: `வணக்கம் ${motherName}, உங்களுக்கும் ${babyNickname}-க்கும் நான் இப்போது எப்படி உதவட்டும்?`,
+      hi: `नमस्ते ${motherName}, मैं अभी आपकी और ${babyNickname} की कैसे मदद करूँ?`,
+    };
+    setMessages([
+      {
+        id: `welc_${Date.now()}`,
+        role: 'assistant',
+        content: welcomeByLang[lang] || welcomeByLang.en,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
+  };
+
+  // Minimized floating bubble on mobile
+  if (isMinimizedBubble) {
+    return (
+      <div className="fixed bottom-20 right-4 z-50 flex items-center gap-2 animate-in zoom-in-95">
+        <button
+          onClick={() => setIsMinimizedBubble(false)}
+          className="h-14 px-4 rounded-full bg-[var(--mc-surface)] border-2 border-[var(--mc-primary)] text-[var(--mc-text-primary)] shadow-[var(--mc-glow)] flex items-center gap-2.5 font-bold text-xs cursor-pointer active:scale-95 transition-all"
+        >
+          <div className="w-8 h-8 rounded-full bg-[var(--mc-btn-gradient)] flex items-center justify-center text-white ai-thinking-pulse">
+            <Heart className="w-4 h-4 fill-white" />
+          </div>
+          <span>Ask MomCare</span>
+          <Maximize2 className="w-4 h-4 text-[var(--mc-primary)]" />
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-xs animate-in fade-in">
-      <div className="w-full max-w-lg bg-[#FCF8F6] rounded-2xl sm:rounded-3xl shadow-xl flex flex-col h-[90vh] max-h-[720px] overflow-hidden border border-[#E9DFDC]">
-        {/* Header */}
-        <div className="bg-[#FFFFFF] px-4 py-3.5 border-b border-[#E9DFDC] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#F2E1E3] flex items-center justify-center text-[#C98291]">
-              <Sparkles className="w-5 h-5 stroke-[2.2]" />
+    <>
+      {/* Backdrop for mobile */}
+      <div
+        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden"
+        onClick={onClose}
+      />
+
+      {/* Main Container: Right Docked Panel on Desktop, Full Modal on Mobile */}
+      <div
+        className="fixed top-0 right-0 bottom-0 z-50 w-full lg:w-[440px] bg-[var(--mc-surface)] border-l border-[var(--mc-card-border)] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300"
+      >
+        {/* Top Header */}
+        <div className="p-3.5 bg-[var(--mc-card)] border-b border-[var(--mc-card-border)] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2.5">
+            {/* Warm Avatar with pulsing neon halo */}
+            <div className="relative w-10 h-10 rounded-2xl bg-[var(--mc-btn-gradient)] flex items-center justify-center text-white shadow-md ai-thinking-pulse">
+              <Heart className="w-5 h-5 fill-white stroke-[1.5]" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[var(--mc-card)]" />
             </div>
+
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-sm sm:text-base text-[#352F35]">MomCare AI</h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F2E1E3] text-[#9F5F6E]">
-                  Week {pregnancyWeek} Context
+                <h3 className="font-bold text-sm sm:text-base text-[var(--mc-text-primary)]">
+                  Ask MomCare
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-[var(--mc-chip-bg)] text-[var(--mc-primary)] border border-[var(--mc-chip-border)]">
+                  Wk {pregnancyWeek}
                 </span>
               </div>
-              <p className="text-[11px] text-[#766D72]">Context-aware maternal companion</p>
+              <p className="text-[11px] text-[var(--mc-text-secondary)]">
+                {lang === 'ta' ? 'அன்பான தோழி & வழிகாட்டி' : lang === 'hi' ? 'आपकी स्नेही साथी' : 'Kind maternal companion'}
+              </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-[#766D72] hover:bg-[#F2E5E7] transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={clearChatHistory}
+              title="Clear conversation"
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-[var(--mc-text-secondary)] hover:text-[var(--mc-text-primary)] hover:bg-[var(--mc-surface)] transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setIsMinimizedBubble(true)}
+              title="Minimize chat"
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-[var(--mc-text-secondary)] hover:text-[var(--mc-text-primary)] hover:bg-[var(--mc-surface)] transition-colors cursor-pointer lg:hidden"
+            >
+              <Minimize2 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onClose}
+              title="Close chat"
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-[var(--mc-text-secondary)] hover:text-[var(--mc-text-primary)] hover:bg-[var(--mc-surface)] transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        {/* Disclaimer banner */}
-        <div className="bg-[#FAF4E9] border-b border-[#E9DFDC] px-4 py-1.5 flex items-center gap-2 text-[11px] text-[#766D72]">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#D5A85C] shrink-0" />
-          <span>Educational & supportive companion. Does not diagnose or replace your doctor.</span>
-        </div>
+        {/* Chat History Area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 cyber-grid-pattern">
+          {/* Example Action Chips on first screen */}
+          {messages.length <= 2 && (
+            <div className="p-3 rounded-2xl bg-[var(--mc-card)] border border-[var(--mc-card-border)] space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--mc-text-primary)]">
+                <Sparkles className="w-3.5 h-3.5 text-[var(--mc-primary)]" />
+                <span>
+                  {lang === 'ta' ? 'MomCare என்ன செய்யும்?' : lang === 'hi' ? 'MomCare क्या कर सकता है?' : 'What MomCare can do:'}
+                </span>
+              </div>
+              <p className="text-[11px] text-[var(--mc-text-secondary)]">
+                {lang === 'ta'
+                  ? 'பகுதிகளைத் திறக்க அல்லது சந்தேகங்களைக் கேட்க கீழே தட்டவும்:'
+                  : lang === 'hi'
+                  ? 'ऐप कंट्रोल करने या सवाल पूछने के लिए टैप करें:'
+                  : 'Tap any example to control the app or ask a question:'}
+              </p>
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {exampleChips.map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSend(chip.prompt)}
+                    className="px-3 py-1.5 rounded-xl text-xs bg-[var(--mc-surface)] border border-[var(--mc-card-border)] hover:border-[var(--mc-primary)] hover:bg-[var(--mc-surface-elevated)] text-[var(--mc-text-primary)] font-medium transition-all text-left shadow-2xs cursor-pointer active:scale-95"
+                  >
+                    {lang === 'ta' ? chip.labelTa : lang === 'hi' ? chip.labelHi : chip.labelEn}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-        {/* Chat message history */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Messages Loop */}
           {messages.map((m) => {
             const isUser = m.role === 'user';
             return (
-              <div key={m.id} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+              <div key={m.id} className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} space-y-1`}>
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                  className={`max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     isUser
-                      ? 'bg-[#F2E1E3] text-[#352F35] rounded-br-xs shadow-2xs'
-                      : 'bg-[#FFFFFF] text-[#352F35] border border-[#E9DFDC] rounded-bl-xs shadow-2xs'
+                      ? 'bg-[var(--mc-btn-gradient)] text-white rounded-br-xs shadow-md'
+                      : 'bg-[var(--mc-card)] text-[var(--mc-text-primary)] border border-[var(--mc-card-border)] rounded-bl-xs shadow-md'
                   }`}
                 >
-                  {!isUser && m.riskLevel && m.riskLevel !== 'none' && (
-                    <div className="mb-2">
-                      <RiskBadge level={m.riskLevel as 'green' | 'yellow' | 'red'} size="sm" />
+                  <p className="whitespace-pre-line">{m.content}</p>
+
+                  {/* Red Emergency Card (Fixed Safety Trigger) */}
+                  {m.dangerAlert && (
+                    <div className="mt-3 p-3.5 rounded-2xl bg-red-950/80 border-2 border-red-500 text-white space-y-3 font-sans shadow-xl">
+                      <div className="flex items-center gap-2 text-red-300 font-bold text-xs uppercase tracking-wider">
+                        <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                        <span>
+                          {lang === 'ta' ? 'அவசர மருத்துவ உதவி தேவை' : lang === 'hi' ? 'आपातकालीन चिकित्सा सहायता' : 'Immediate Medical Attention'}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-red-100 font-semibold leading-relaxed">
+                        {lang === 'ta'
+                          ? 'அருகிலுள்ள மருத்துவமனைக்கு உடனே செல்லவும் அல்லது 108 அழைக்கவும்.'
+                          : lang === 'hi'
+                          ? 'कृपया तुरंत अपने नजदीकी अस्पताल जाएं या 108 पर कॉल करें।'
+                          : 'Go to your nearest hospital or call 108 immediately.'}
+                      </p>
+
+                      <div className="grid grid-cols-1 gap-2 pt-1">
+                        <a
+                          href={`tel:${m.dangerAlert.doctorPhone}`}
+                          className="min-h-[48px] px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-transform active:scale-95"
+                        >
+                          <PhoneCall className="w-4 h-4" />
+                          <span>
+                            {lang === 'ta' ? 'மருத்துவரை அழைக்கவும்' : lang === 'hi' ? 'डॉक्टर को कॉल करें' : 'Call My Doctor'} ({m.dangerAlert.doctorPhone})
+                          </span>
+                        </a>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <a
+                            href="tel:108"
+                            className="min-h-[48px] px-3 py-2 rounded-xl bg-red-700 hover:bg-red-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-transform active:scale-95"
+                          >
+                            <Phone className="w-4 h-4" />
+                            <span>108 (Ambulance)</span>
+                          </a>
+
+                          <a
+                            href="tel:112"
+                            className="min-h-[48px] px-3 py-2 rounded-xl bg-red-800 hover:bg-red-900 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-transform active:scale-95"
+                          >
+                            <Phone className="w-4 h-4" />
+                            <span>112 (Emergency)</span>
+                          </a>
+                        </div>
+                      </div>
                     </div>
                   )}
 
-                  <p className="whitespace-pre-line">{m.content}</p>
+                  {/* Yes/No Action Confirmation Card */}
+                  {m.pendingAction && activePendingAction && activePendingAction.type === m.pendingAction.type && (
+                    <div className="mt-3 p-3 rounded-2xl bg-[var(--mc-surface)] border border-[var(--mc-primary)] space-y-2.5">
+                      <p className="text-xs font-semibold text-[var(--mc-text-primary)]">
+                        {getConfirmationPrompt(m.pendingAction, lang)}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => executeActionConfirmed(m.pendingAction!)}
+                          className="min-h-[48px] px-3 py-2 rounded-xl cyber-gradient-btn text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer active:scale-95 transition-transform"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          <span>
+                            {lang === 'ta' ? 'ஆமாம், திறக்கவும்' : lang === 'hi' ? 'हाँ, बिल्कुल' : 'Yes, please'}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelActionConfirmed}
+                          className="min-h-[48px] px-3 py-2 rounded-xl bg-[var(--mc-card)] border border-[var(--mc-card-border)] hover:bg-[var(--mc-surface-elevated)] text-[var(--mc-text-primary)] font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-transform"
+                        >
+                          <X className="w-4 h-4 text-rose-400" />
+                          <span>
+                            {lang === 'ta' ? 'வேண்டாம்' : lang === 'hi' ? 'नहीं, रहने दें' : 'No, thank you'}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
-                  {!isUser && m.sources && m.sources.length > 0 && (
-                    <div className="mt-2.5 pt-2 border-t border-[#E9DFDC]/60 flex items-center gap-1.5 text-[11px] text-[#766D72]">
-                      <BookOpen className="w-3 h-3 text-[#B7A6C9]" />
-                      <span>Sources: {m.sources.join(', ')}</span>
+                  {/* Grounded Source Chips */}
+                  {!isUser && m.sourceIds && m.sourceIds.length > 0 && (
+                    <div className="mt-2.5 pt-2 border-t border-[var(--mc-card-border)] flex flex-wrap items-center gap-1.5 text-[10px] text-[var(--mc-text-secondary)]">
+                      <BookOpen className="w-3 h-3 text-[var(--mc-primary)] shrink-0" />
+                      <span>{lang === 'ta' ? 'ஆதாரங்கள்:' : lang === 'hi' ? 'स्रोत:' : 'Sources:'}</span>
+                      {m.sourceIds.map((id) => {
+                        const note = getKnowledgeNoteById(id);
+                        return (
+                          <span
+                            key={id}
+                            title={note?.topic || id}
+                            className="px-2 py-0.5 rounded-md bg-[var(--mc-chip-bg)] text-[var(--mc-primary)] border border-[var(--mc-chip-border)] font-mono font-medium"
+                          >
+                            {id}: {note?.topic || 'Guidance'}
+                          </span>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
-                <span className="text-[10px] text-[#766D72] mt-1 px-1">{m.timestamp}</span>
+
+                {/* Follow-up Tappable Suggestion Buttons */}
+                {!isUser && m.followUps && m.followUps.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1 pl-1 max-w-[90%]">
+                    {m.followUps.map((fu, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSend(fu)}
+                        className="px-3 py-1.5 rounded-full text-xs bg-[var(--mc-chip-bg)] border border-[var(--mc-chip-border)] hover:border-[var(--mc-primary)] text-[var(--mc-text-primary)] font-medium transition-all text-left shadow-2xs cursor-pointer active:scale-95"
+                      >
+                        💬 {fu}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <span className="text-[10px] text-[var(--mc-text-secondary)] px-1 font-mono">
+                  {m.timestamp}
+                </span>
               </div>
             );
           })}
 
+          {/* MomCare is thinking pulse animation */}
           {isLoading && (
             <div className="flex items-start gap-2">
-              <div className="bg-[#FFFFFF] border border-[#E9DFDC] rounded-2xl rounded-bl-xs px-4 py-3 shadow-2xs">
+              <div className="bg-[var(--mc-card)] border border-[var(--mc-card-border)] rounded-2xl rounded-bl-xs px-4 py-3 shadow-md ai-thinking-pulse">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-[#C98291] animate-bounce" />
-                  <div className="w-2 h-2 rounded-full bg-[#C98291] animate-bounce [animation-delay:0.2s]" />
-                  <div className="w-2 h-2 rounded-full bg-[#C98291] animate-bounce [animation-delay:0.4s]" />
-                  <span className="text-xs text-[#766D72] ml-1">Analyzing with your pregnancy context...</span>
+                  <div className="w-2 h-2 rounded-full bg-[var(--mc-primary)] animate-bounce" />
+                  <div className="w-2 h-2 rounded-full bg-[var(--mc-primary)] animate-bounce [animation-delay:0.2s]" />
+                  <div className="w-2 h-2 rounded-full bg-[var(--mc-primary)] animate-bounce [animation-delay:0.4s]" />
+                  <span className="text-xs text-[var(--mc-text-primary)] ml-1 font-medium">
+                    {lang === 'ta' ? 'MomCare யோசிக்கிறது...' : lang === 'hi' ? 'MomCare सोच रही है...' : 'MomCare is thinking...'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -220,23 +669,8 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Suggested Quick Prompts */}
-        {messages.length <= 2 && (
-          <div className="px-4 py-2 border-t border-[#E9DFDC] bg-[#FFFFFF]/80 overflow-x-auto flex gap-2 no-scrollbar">
-            {quickQuestions.map((q, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSend(q)}
-                className="whitespace-nowrap px-3 py-1 rounded-full text-xs bg-[#F2E5E7] text-[#9F5F6E] hover:bg-[#F2E1E3] transition-colors border border-[#E9DFDC]"
-              >
-                {q}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Input box */}
-        <div className="p-3 bg-[#FFFFFF] border-t border-[#E9DFDC]">
+        {/* Input Bar */}
+        <div className="p-3 bg-[var(--mc-surface)] border-t border-[var(--mc-card-border)] shrink-0">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -248,20 +682,35 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about symptoms, kick counts, baby growth..."
-              className="flex-1 bg-[#FCF8F6] border border-[#E9DFDC] rounded-xl px-3.5 py-2.5 text-sm text-[#352F35] placeholder-[#766D72] focus:outline-hidden focus:border-[#C98291] transition-colors"
+              placeholder={
+                lang === 'ta'
+                  ? 'கேளுங்கள்: "குழந்தை வளர்ச்சியைத் திற", "சுவாசப் பயிற்சி"...'
+                  : lang === 'hi'
+                  ? 'पूछें: "शिशु विकास खोलो", "सांस अभ्यास"...'
+                  : 'Ask MomCare or say "open baby development"...'
+              }
+              className="flex-1 min-h-[48px] bg-[var(--mc-card)] border border-[var(--mc-card-border)] rounded-2xl px-4 py-2.5 text-sm text-[var(--mc-text-primary)] placeholder-[var(--mc-text-secondary)] focus:outline-hidden focus:border-[var(--mc-primary)] focus:shadow-[var(--mc-glow)] transition-all"
             />
             <button
               type="submit"
               disabled={!input.trim() || isLoading}
-              className="w-10 h-10 rounded-xl bg-[#9F5F6E] text-white flex items-center justify-center hover:bg-[#8C5361] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shrink-0"
+              className="w-12 h-12 rounded-2xl cyber-gradient-btn text-white flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0 cursor-pointer shadow-md"
               aria-label="Send message"
             >
               <Send className="w-4 h-4" />
             </button>
           </form>
+
+          {/* Footer Safety Disclaimer (Mandatory) */}
+          <p className="mt-2 text-[10px] text-center text-[var(--mc-text-secondary)] leading-tight font-sans">
+            {lang === 'ta'
+              ? 'MomCare தகவல்களையும் ஆரம்ப எச்சரிக்கைகளையும் மட்டுமே வழங்குகிறது. நோய் கண்டறிதல் அல்ல. அவசரநிலையில் 108 அல்லது உங்கள் மருத்துவரை உடனே அழைக்கவும்.'
+              : lang === 'hi'
+              ? 'MomCare केवल जानकारी और प्रारंभिक चेतावनी देता है, निदान नहीं। आपात स्थिति में 108 या अपने डॉक्टर को तुरंत कॉल करें।'
+              : 'MomCare gives information and early warnings. It does not diagnose. In an emergency, call 108 or your doctor immediately.'}
+          </p>
         </div>
       </div>
-    </div>
+    </>
   );
 };

@@ -35,24 +35,86 @@ export async function requestSymptomTriage(params: {
   return json.data;
 }
 
+export interface ChatActionPayload {
+  type: string;
+  descriptionEn: string;
+  descriptionTa: string;
+  descriptionHi: string;
+  payload?: any;
+}
+
+export interface ContextualChatResponse {
+  reply: string;
+  sourceIds: string[];
+  uncertain: boolean;
+  urgent: boolean;
+  followUps: string[];
+  action?: ChatActionPayload | null;
+  sources?: string[];
+  fallback?: boolean;
+}
+
 export async function requestContextualChat(params: {
   message: string;
   conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>;
   pregnancyWeek: number;
   patientContext: RetrievedPatientContext;
   language?: 'en' | 'ta' | 'hi';
-}): Promise<{ reply: string; riskLevel: 'green' | 'yellow' | 'red'; sources: string[] }> {
-  const res = await fetch('/api/gemini/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
-  });
+}): Promise<ContextualChatResponse> {
+  const lang = params.language || 'en';
+  const fallbackMessages: Record<'en' | 'ta' | 'hi', string> = {
+    en: "I'm having trouble answering right now. Please try again. If you feel unwell, call your doctor.",
+    ta: "பதில் அளிப்பதில் சிறிது தாமதம் ஏற்படுகிறது. தயவுசெய்து மீண்டும் முயற்சிக்கவும். உங்களுக்கு உடல்நலக்குறைவு ஏற்பட்டால் உடனே மருத்துவரை அழைக்கவும்.",
+    hi: "मुझे अभी जवाब देने में परेशानी हो रही है। कृपया पुनः प्रयास करें। यदि आप अस्वस्थ महसूस कर रही हैं, तो अपने डॉक्टर को कॉल करें।",
+  };
+  const fallbackText = fallbackMessages[lang] || fallbackMessages.en;
 
-  if (!res.ok) {
-    throw new Error(`Chat request failed: ${res.statusText}`);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+  try {
+    const res = await fetch('/api/gemini/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      return {
+        reply: fallbackText,
+        sourceIds: [],
+        uncertain: true,
+        urgent: false,
+        followUps: [],
+        action: null,
+        fallback: true,
+      };
+    }
+
+    const json = await res.json();
+    return {
+      reply: json.reply || fallbackText,
+      sourceIds: Array.isArray(json.sourceIds) ? json.sourceIds : [],
+      uncertain: Boolean(json.uncertain),
+      urgent: Boolean(json.urgent),
+      followUps: Array.isArray(json.followUps) ? json.followUps : [],
+      action: json.action || null,
+      fallback: Boolean(json.fallback),
+    };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    return {
+      reply: fallbackText,
+      sourceIds: [],
+      uncertain: true,
+      urgent: false,
+      followUps: [],
+      action: null,
+      fallback: true,
+    };
   }
-
-  return await res.json();
 }
 
 export async function requestReportInsights(params: {

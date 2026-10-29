@@ -206,6 +206,11 @@ Impression: Physiological hemodilution of pregnancy within expected parameters. 
         </div>
       </div>
 
+      {/* Responsive Desktop Two-Panel Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* LEFT COLUMN: Upload area & Glossary (lg:col-span-5) */}
+        <div className="lg:col-span-5 space-y-4">
+
       {/* Feature 5: Clinical Ultrasound & Lab Glossary Collapsible */}
       <div className="bg-[#FFFFFF] rounded-2xl p-4 sm:p-5 border border-[#F5EBEF] shadow-sm space-y-3">
         <div
@@ -341,6 +346,10 @@ Impression: Physiological hemodilution of pregnancy within expected parameters. 
           </button>
         </div>
       </div>
+      </div>
+
+      {/* RIGHT COLUMN: Active Report Detail View & Saved Reports (lg:col-span-7) */}
+      <div className="lg:col-span-7 space-y-4">
 
       {/* Active Report Detail View */}
       {activeReport && (
@@ -375,20 +384,50 @@ Impression: Physiological hemodilution of pregnancy within expected parameters. 
             </p>
           </div>
 
-          {/* Key Values Table */}
+          {/* Key Values Table (Must scroll sideways inside its box on small screens) */}
           {activeReport.keyValues && activeReport.keyValues.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-[#7D6E74] uppercase tracking-wider">Key Measurements & Findings</h4>
-              <div className="space-y-1.5">
-                {activeReport.keyValues.map((kv, i) => (
-                  <div key={i} className="p-2.5 rounded-xl bg-[#FFF9FA] border border-[#F5EBEF] text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <span className="font-bold text-[#4A3E42]">{kv.metric}</span>
-                    <span className="px-2 py-0.5 rounded-md bg-[#EDF5EF] text-[#6E9C7B] font-semibold text-[11px] self-start sm:self-auto">
-                      {kv.value}
-                    </span>
-                    <span className="text-[#7D6E74] text-[11px] sm:max-w-xs">{kv.interpretation}</span>
-                  </div>
-                ))}
+              <h4 className="text-xs font-bold text-[var(--mc-text-secondary)] uppercase tracking-wider">Key Measurements & Findings</h4>
+              <div className="overflow-x-auto rounded-xl border border-[var(--mc-card-border)] bg-[var(--mc-card)]">
+                <table className="w-full text-left text-xs min-w-[320px]">
+                  <thead className="bg-[var(--mc-surface)] border-b border-[var(--mc-card-border)] text-[var(--mc-text-secondary)] font-semibold">
+                    <tr>
+                      <th className="p-2.5">Measurement</th>
+                      <th className="p-2.5">Value</th>
+                      <th className="p-2.5">Clinical Meaning</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--mc-card-border)]">
+                    {activeReport.keyValues
+                      .filter((kv) => {
+                        const check = (str?: string) => {
+                          if (!str) return false;
+                          const l = str.toLowerCase();
+                          return (
+                            l.includes('fetal sex') ||
+                            l.includes('baby sex') ||
+                            l.includes('gender') ||
+                            l.includes('fetal gender') ||
+                            l.includes('sex of fetus') ||
+                            l.includes('male fetus') ||
+                            l.includes('female fetus')
+                          );
+                        };
+                        return !check(kv.metric) && !check(kv.value) && !check(kv.interpretation);
+                      })
+                      .map((kv, i) => (
+                      <tr key={i} className="hover:bg-[var(--mc-chip-bg)] transition-colors">
+                        <td className="p-2.5 font-bold text-[var(--mc-text-primary)] whitespace-nowrap">{kv.metric}</td>
+                        <td className="p-2.5 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded-md bg-[var(--mc-safe-bg)] text-[var(--mc-safe)] font-semibold text-[11px]">
+                            {kv.value}
+                          </span>
+                        </td>
+                        <td className="p-2.5 text-[var(--mc-text-secondary)] text-[11px] min-w-[180px]">{kv.interpretation}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -472,6 +511,8 @@ Impression: Physiological hemodilution of pregnancy within expected parameters. 
             ))}
           </div>
         )}
+      </div>
+        </div>
       </div>
     </div>
   );

@@ -202,9 +202,15 @@ export interface Translations {
 
   // Navigation
   navHome: string;
-  navPregnancy: string;
-  navCare: string;
+  navDailyCheckin: string;
+  navBabyDev: string;
+  navAskMomCare: string;
+  navReports: string;
+  navDoctorSummary: string;
   navCommunity: string;
+  navLearn: string;
+  navCare: string;
+  navPregnancy: string;
   navProfile: string;
 
   // Personal AI Companion Home Redesign
@@ -449,9 +455,15 @@ export const TRANSLATIONS: Record<Language, Translations> = {
 
     // Navigation
     navHome: 'Home',
-    navPregnancy: 'Womb',
-    navCare: 'Care',
+    navDailyCheckin: 'Daily Check-in',
+    navBabyDev: 'Baby Development',
+    navAskMomCare: 'Ask MomCare',
+    navReports: 'Reports',
+    navDoctorSummary: 'Doctor Summary',
     navCommunity: 'Circle',
+    navLearn: 'Learn',
+    navCare: 'Care Habits',
+    navPregnancy: 'Womb',
     navProfile: 'Profile',
 
     // Personal AI Companion Home Redesign
@@ -695,9 +707,15 @@ export const TRANSLATIONS: Record<Language, Translations> = {
 
     // Navigation
     navHome: 'முகப்பு',
-    navPregnancy: 'கருவறை',
+    navDailyCheckin: 'தினசரி நலப் பதிவு',
+    navBabyDev: 'குழந்தை வளர்ச்சி',
+    navAskMomCare: 'மாம்கேரிடம் கேளுங்கள்',
+    navReports: 'மருத்துவ அறிக்கைகள்',
+    navDoctorSummary: 'மருத்துவர் குறிப்பு',
+    navCommunity: 'வட்டம் (Circle)',
+    navLearn: 'விழிப்புணர்வு (Learn)',
     navCare: 'பராமரிப்பு',
-    navCommunity: 'வட்டம்',
+    navPregnancy: 'கருவறை',
     navProfile: 'சுயவிவரம்',
 
     // Personal AI Companion Home Redesign
@@ -941,9 +959,15 @@ export const TRANSLATIONS: Record<Language, Translations> = {
 
     // Navigation
     navHome: 'होम',
+    navDailyCheckin: 'दैनिक चेक-इन',
+    navBabyDev: 'शिशु का विकास',
+    navAskMomCare: 'मॉमकेयर से पूछें',
+    navReports: 'मेडिकल रिपोर्ट्स',
+    navDoctorSummary: 'डॉक्टर सारांश',
+    navCommunity: 'सहेलियां (Circle)',
+    navLearn: 'सीखें (Learn)',
+    navCare: 'दैनिक देखभाल',
     navPregnancy: 'गर्भ',
-    navCare: 'देखभाल',
-    navCommunity: 'सहेलियां',
     navProfile: 'प्रोफ़ाइल',
 
     // Personal AI Companion Home Redesign
