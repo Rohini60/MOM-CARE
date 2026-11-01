@@ -9,6 +9,7 @@ import {
   handleMomCareNoticed,
   handleWombRender,
   handleHomeInsight,
+  handleVaultReportExtraction,
 } from './src/server/geminiHandler';
 
 function geminiApiPlugin(): Plugin {
@@ -72,6 +73,12 @@ function geminiApiPlugin(): Plugin {
 
           if (url === '/api/gemini/home-insight') {
             const result = await handleHomeInsight(body);
+            res.end(JSON.stringify(result));
+            return;
+          }
+
+          if (url === '/api/gemini/vault-extract') {
+            const result = await handleVaultReportExtraction(body);
             res.end(JSON.stringify(result));
             return;
           }

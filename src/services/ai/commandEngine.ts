@@ -10,17 +10,26 @@ export type AppActionType =
   | 'navigate_circle'
   | 'navigate_learn'
   | 'navigate_vitals'
+  | 'navigate_symptoms'
   | 'navigate_profile'
   | 'navigate_settings'
+  | 'select_pregnancy_week'
+  | 'select_baby_tab'
+  | 'switch_device_mode'
   | 'set_theme'
   | 'set_mode'
   | 'set_language'
   | 'start_checkin'
   | 'start_breathing'
+  | 'start_vitals_check'
+  | 'start_symptom_log'
   | 'print_doctor_summary'
   | 'download_data'
+  | 'open_demo_scenarios'
+  | 'open_presentation'
   | 'show_call_doctor'
   | 'show_ambulance'
+  | 'navigate_vault'
   | 'logout';
 
 export interface AppAction {
@@ -43,17 +52,26 @@ export const ALLOWED_ACTION_TYPES: AppActionType[] = [
   'navigate_circle',
   'navigate_learn',
   'navigate_vitals',
+  'navigate_symptoms',
   'navigate_profile',
   'navigate_settings',
+  'select_pregnancy_week',
+  'select_baby_tab',
+  'switch_device_mode',
   'set_theme',
   'set_mode',
   'set_language',
   'start_checkin',
   'start_breathing',
+  'start_vitals_check',
+  'start_symptom_log',
   'print_doctor_summary',
   'download_data',
+  'open_demo_scenarios',
+  'open_presentation',
   'show_call_doctor',
   'show_ambulance',
+  'navigate_vault',
   'logout',
 ];
 
@@ -588,6 +606,23 @@ export function parseLocalCommand(text: string): AppAction | null {
     };
   }
 
+  // Health Vault
+  if (
+    lower.includes('vault') ||
+    lower.includes('health vault') ||
+    lower.includes('வால்ட்') ||
+    lower.includes('பாதுகாப்பகம்') ||
+    lower.includes('वॉल्ट') ||
+    lower.includes('हेल्थ वॉल्ट')
+  ) {
+    return {
+      type: 'navigate_vault',
+      descriptionEn: 'open My Health Vault',
+      descriptionTa: 'My Health Vault பக்கத்தைத் திறக்கவா',
+      descriptionHi: 'My Health Vault खोलें',
+    };
+  }
+
   // 11. Profile & Settings
   if (
     lower.includes('open settings') ||
@@ -629,6 +664,188 @@ export function parseLocalCommand(text: string): AppAction | null {
       descriptionEn: 'download your medical & check-in data',
       descriptionTa: 'உங்கள் தரவை பதிவிறக்கம் செய்யவா',
       descriptionHi: 'आपका डेटा डाउनलोड करें',
+    };
+  }
+
+  // 1.5 Device Mode Switching (Mobile, Tablet, Desktop)
+  if (
+    lower.includes('mobile mode') ||
+    lower.includes('mobile view') ||
+    lower.includes('switch to mobile') ||
+    lower.includes('phone mode') ||
+    lower.includes('phone view') ||
+    lower.includes('மொபைல் மோடு') ||
+    lower.includes('மொபைல் பார்வை') ||
+    lower.includes('मोबाइल मोड')
+  ) {
+    return {
+      type: 'switch_device_mode',
+      payload: { mode: 'mobile' },
+      descriptionEn: 'switch to Mobile mode',
+      descriptionTa: 'மொபைல் முறைக்கு (Mobile mode) மாற்றவா',
+      descriptionHi: 'मोबाइल मोड में बदलें',
+    };
+  }
+
+  if (
+    lower.includes('tablet mode') ||
+    lower.includes('tablet view') ||
+    lower.includes('switch to tablet') ||
+    lower.includes('ipad mode') ||
+    lower.includes('ipad view') ||
+    lower.includes('டேப்லெட் மோடு') ||
+    lower.includes('டேப்லெட் பார்வை') ||
+    lower.includes('टैबलेट मोड')
+  ) {
+    return {
+      type: 'switch_device_mode',
+      payload: { mode: 'tablet' },
+      descriptionEn: 'switch to Tablet mode',
+      descriptionTa: 'டேப்லெட் முறைக்கு (Tablet mode) மாற்றவா',
+      descriptionHi: 'टैबलेट मोड में बदलें',
+    };
+  }
+
+  if (
+    lower.includes('desktop mode') ||
+    lower.includes('desktop view') ||
+    lower.includes('switch to desktop') ||
+    lower.includes('computer view') ||
+    lower.includes('pc view') ||
+    lower.includes('டெஸ்க்டாப் மோடு') ||
+    lower.includes('டெஸ்க்டாப் பார்வை') ||
+    lower.includes('डेस्कटॉप मोड')
+  ) {
+    return {
+      type: 'switch_device_mode',
+      payload: { mode: 'desktop' },
+      descriptionEn: 'switch to Desktop mode',
+      descriptionTa: 'டெஸ்க்டாப் முறைக்கு (Desktop mode) மாற்றவா',
+      descriptionHi: 'डेस्कटॉप मोड में बदलें',
+    };
+  }
+
+  // 1.6 Pregnancy Week Jumping (e.g., "go to week 28", "week 32", "வாரம் 24")
+  const weekMatch = lower.match(/(?:week|wk|வாரம்|हफ्ता|हफ़्ते)\s*(\d{1,2})/i);
+  if (weekMatch && weekMatch[1]) {
+    const parsedWk = parseInt(weekMatch[1], 10);
+    if (parsedWk >= 1 && parsedWk <= 42) {
+      return {
+        type: 'select_pregnancy_week',
+        payload: { week: parsedWk },
+        descriptionEn: `jump to Week ${parsedWk} development`,
+        descriptionTa: `வாரம் ${parsedWk} வளர்ச்சிப் பக்கத்திற்கு செல்லவா`,
+        descriptionHi: `हफ्ते ${parsedWk} के विकास सेक्शन पर जाएँ`,
+      };
+    }
+  }
+
+  // 1.7 Vitals Check / ML Screening
+  if (
+    lower.includes('check vitals') ||
+    lower.includes('vitals check') ||
+    lower.includes('vitals screening') ||
+    lower.includes('blood pressure check') ||
+    lower.includes('bp check') ||
+    lower.includes('வைட்டல்ஸ்') ||
+    lower.includes('இரத்த அழுத்தம் பரிசோதனை') ||
+    lower.includes('வாசல் செக்') ||
+    lower.includes('वाइटल्स चेक') ||
+    lower.includes('रक्तचाप जाँच')
+  ) {
+    return {
+      type: 'navigate_vitals',
+      descriptionEn: 'open Vitals Check (ML screening)',
+      descriptionTa: 'வைட்டல்ஸ் பரிசோதனைப் பக்கத்தைத் திறக்கவா',
+      descriptionHi: 'वाइटल्स चेक सेक्शन खोलें',
+    };
+  }
+
+  // 1.8 Symptom Center / Triage
+  if (
+    lower.includes('check symptoms') ||
+    lower.includes('symptom triage') ||
+    lower.includes('log symptom') ||
+    lower.includes('symptoms center') ||
+    lower.includes('அறிகுறிகள்') ||
+    lower.includes('நோய் அறிகுறிகள்') ||
+    lower.includes('लक्षण जाँच') ||
+    lower.includes('लक्षण केंद्र')
+  ) {
+    return {
+      type: 'navigate_symptoms',
+      descriptionEn: 'open Symptom Triage Center',
+      descriptionTa: 'அறிகுறி பரிசோதனைப் பக்கத்தைத் திறக்கவா',
+      descriptionHi: 'लक्षण जाँच केंद्र खोलें',
+    };
+  }
+
+  // 1.9 3D Womb / Timeline Story
+  if (
+    lower.includes('3d womb') ||
+    lower.includes('womb visual') ||
+    lower.includes('view womb') ||
+    lower.includes('fetus in womb') ||
+    lower.includes('கருப்பை காட்சி') ||
+    lower.includes('3D गर्भ दृश्य')
+  ) {
+    return {
+      type: 'select_baby_tab',
+      payload: { tab: 'womb' },
+      descriptionEn: 'open 3D Womb Visualizer',
+      descriptionTa: '3D கருப்பை காட்சியைத் திறக்கவா',
+      descriptionHi: '3D गर्भ दृश्य खोलें',
+    };
+  }
+
+  if (
+    lower.includes('pregnancy story') ||
+    lower.includes('my story') ||
+    lower.includes('pregnancy timeline') ||
+    lower.includes('டைம்லைன்') ||
+    lower.includes('என் கதை') ||
+    lower.includes('मेरी कहानी')
+  ) {
+    return {
+      type: 'select_baby_tab',
+      payload: { tab: 'timeline' },
+      descriptionEn: 'open My Pregnancy Story timeline',
+      descriptionTa: 'கர்ப்ப கால டைம்லைன் கதையைத் திறக்கவா',
+      descriptionHi: 'मेरी गर्भावस्था समयरेखा खोलें',
+    };
+  }
+
+  // 1.10 Presentation & Demo Scenarios
+  if (
+    lower.includes('presentation') ||
+    lower.includes('show slides') ||
+    lower.includes('pitch deck') ||
+    lower.includes('ஸ்லைடு') ||
+    lower.includes('பிரசன்டேஷன்') ||
+    lower.includes('स्लाइड्स')
+  ) {
+    return {
+      type: 'open_presentation',
+      descriptionEn: 'open 15-Slide Presentation Deck',
+      descriptionTa: 'விளக்கக் காட்சி ஸ்லைடுகளைத் திறக்கவா',
+      descriptionHi: 'प्रेजेंटेशन स्लाइड्स खोलें',
+    };
+  }
+
+  if (
+    lower.includes('demo scenario') ||
+    lower.includes('demo scenarios') ||
+    lower.includes('show demo') ||
+    lower.includes('clinical demo') ||
+    lower.includes('டெமோ') ||
+    lower.includes('மாதிரி காட்சிகள்') ||
+    lower.includes('डेमो')
+  ) {
+    return {
+      type: 'open_demo_scenarios',
+      descriptionEn: 'open Judges Demo Scenarios modal',
+      descriptionTa: 'மாதிரி டெமோ காட்சிகளைத் திறக்கவா',
+      descriptionHi: 'डेमो परिदृश्य खोलें',
     };
   }
 
@@ -686,15 +903,19 @@ export function isUserAffirmative(text: string): boolean {
     'do it',
     'open it',
     'yes please',
+    'yes buddy',
+    'do it buddy',
     'ஆம்',
     'சரி',
     'ஆமாம்',
     'திறக்கவும்',
     'செய்',
     'செய்யுங்கள்',
+    'பட்டி செய்',
     'हाँ',
     'हां',
     'हाँ जी',
+    'हाँ बडी',
     'ठीक है',
     'ज़रूर',
     'खोलें',
@@ -717,6 +938,7 @@ export function isUserNegative(text: string): boolean {
     'do not',
     'never mind',
     'stop',
+    'no buddy',
     'இல்லை',
     'வேண்டாம்',
     'ரத்து செய்',
@@ -730,40 +952,40 @@ export function isUserNegative(text: string): boolean {
 }
 
 /**
- * Formats Yes/No prompt text in user language
+ * Formats Yes/No prompt text in user language naming Buddy
  */
 export function getConfirmationPrompt(action: AppAction, lang: Language): string {
   if (lang === 'ta') {
-    return `நான் ${action.descriptionTa}?`;
+    return `Buddy உங்களுக்காக ${action.descriptionTa}?`;
   }
   if (lang === 'hi') {
-    return `क्या आप चाहते हैं कि मैं ${action.descriptionHi}?`;
+    return `क्या आप चाहते हैं कि Buddy ${action.descriptionHi}?`;
   }
-  return `Do you want me to ${action.descriptionEn}?`;
+  return `Do you want Buddy to ${action.descriptionEn}?`;
 }
 
 /**
- * Formats success message after execution
+ * Formats success message after execution naming Buddy
  */
 export function getActionSuccessMessage(action: AppAction, lang: Language): string {
   if (lang === 'ta') {
-    return `${action.descriptionTa} ✓`;
+    return `Buddy: ${action.descriptionTa} முடிந்தது ✓`;
   }
   if (lang === 'hi') {
-    return `${action.descriptionHi} ✓`;
+    return `Buddy: ${action.descriptionHi} पूरा हुआ ✓`;
   }
-  return `${action.descriptionEn.replace('open ', 'Opened ').replace('switch to ', 'Switched to ').replace('start ', 'Started ')} ✓`;
+  return `Buddy: ${action.descriptionEn.replace('open ', 'Opened ').replace('switch to ', 'Switched to ').replace('start ', 'Started ').replace('jump to ', 'Jumped to ').replace('go to ', 'Navigated to ')} ✓`;
 }
 
 /**
- * Formats rejection response
+ * Formats rejection response naming Buddy
  */
 export function getActionCancelMessage(lang: Language): string {
   if (lang === 'ta') {
-    return 'சரி, நான் அதை செய்யவில்லை. உங்களுக்கு வேறு என்ன உதவி வேண்டும்?';
+    return 'சரி, Buddy அதை செய்யவில்லை. உங்களுக்கு வேறு என்ன உதவி வேண்டும்?';
   }
   if (lang === 'hi') {
-    return 'ठीक है, मैं ऐसा नहीं करूंगी। बताइए मैं आपकी और क्या मदद कर सकती हूँ?';
+    return 'कोई बात नहीं, Buddy ऐसा नहीं करेगा। बताइए मैं आपकी और क्या मदद करूँ?';
   }
-  return "Okay, I won't do that. How else can I help you today?";
+  return "No problem, Buddy won't do that. What else can I help you with?";
 }

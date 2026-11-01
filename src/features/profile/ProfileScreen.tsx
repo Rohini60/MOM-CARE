@@ -18,6 +18,11 @@ import {
   Download,
   Globe,
   CheckCircle2,
+  Camera,
+  Upload,
+  Image as ImageIcon,
+  FolderLock,
+  ChevronRight,
 } from 'lucide-react';
 import type { UserProfile } from '../../types';
 import { updateUserProfile, deleteUserData } from '../../services/firebase/userService';
@@ -35,6 +40,7 @@ interface ProfileScreenProps {
   onLogout: () => void;
   isPhoneFrame: boolean;
   onTogglePhoneFrame: () => void;
+  onOpenVault?: () => void;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
@@ -44,6 +50,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onLogout,
   isPhoneFrame,
   onTogglePhoneFrame,
+  onOpenVault,
 }) => {
   const { language, setLanguage, t } = useTranslation();
 
@@ -65,6 +72,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [saveAiHistory, setSaveAiHistory] = useState(profile?.saveAiHistory ?? true);
   const [communityAnonymous, setCommunityAnonymous] = useState(profile?.communityAnonymous ?? false);
 
+  // User Photo Option State
+  const [photoUrl, setPhotoUrl] = useState<string | null>(profile?.photoUrl || null);
+  const [isProcessingPhoto, setIsProcessingPhoto] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState(false);
@@ -79,6 +91,75 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
   };
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file (JPEG, PNG, or WebP)');
+      return;
+    }
+
+    setIsProcessingPhoto(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const targetSize = 256;
+        canvas.width = targetSize;
+        canvas.height = targetSize;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          const minSide = Math.min(img.width, img.height);
+          const sx = (img.width - minSide) / 2;
+          const sy = (img.height - minSide) / 2;
+          ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, targetSize, targetSize);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+          setPhotoUrl(compressedDataUrl);
+          if (profile?.id) {
+            updateUserProfile(profile.id, { photoUrl: compressedDataUrl });
+            onProfileUpdated();
+          }
+        }
+        setIsProcessingPhoto(false);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSelectPresetAvatar = (emoji: string) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = '#26112D';
+      ctx.beginPath();
+      ctx.arc(64, 64, 60, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = '64px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(emoji, 64, 70);
+      const dataUrl = canvas.toDataURL('image/png');
+      setPhotoUrl(dataUrl);
+      if (profile?.id) {
+        updateUserProfile(profile.id, { photoUrl: dataUrl });
+        onProfileUpdated();
+      }
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoUrl(null);
+    if (profile?.id) {
+      updateUserProfile(profile.id, { photoUrl: null });
+      onProfileUpdated();
+    }
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
@@ -88,6 +169,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       await updateUserProfile(profile.id, {
         displayName: displayName.trim(),
         preferredName: preferredName.trim() || displayName.trim(),
+        photoUrl: photoUrl || null,
         age: age ? parseInt(age, 10) : null,
         babyNickname: babyNickname.trim() ? babyNickname.trim() : null,
         dueDate,
@@ -195,10 +277,27 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
       {/* Header Card */}
       <div className="bg-[var(--mc-card)] rounded-2xl p-4 sm:p-5 border border-[var(--mc-card-border)] shadow-2xs flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[var(--mc-chip-bg)] border border-[var(--mc-chip-border)] flex items-center justify-center text-lg font-bold text-[var(--mc-primary)]">
-            {displayName.charAt(0) || 'M'}
+        <div className="flex items-center gap-3.5">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="w-14 h-14 rounded-2xl bg-[var(--mc-chip-bg)] border-2 border-[var(--mc-primary)] shadow-[var(--mc-glow)] flex items-center justify-center relative cursor-pointer group overflow-hidden shrink-0"
+            title="Click to upload or change profile photo"
+          >
+            {photoUrl ? (
+              <img src={photoUrl} alt={displayName} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xl font-black text-[var(--mc-primary)]">
+                {displayName.charAt(0) || 'M'}
+              </span>
+            )}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+              <Camera className="w-5 h-5 drop-shadow-md" />
+            </div>
+            <div className="absolute bottom-0 right-0 p-1 bg-[var(--mc-primary)] text-white rounded-tl-lg shadow-xs">
+              <Camera className="w-2.5 h-2.5" />
+            </div>
           </div>
+
           <div>
             <h2 className="font-bold text-base text-[var(--mc-text-primary)]">
               {preferredName || displayName || 'MomCare Member'}
@@ -220,6 +319,149 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           <LogOut className="w-3.5 h-3.5" />
           <span>{t.logoutBtn}</span>
         </button>
+      </div>
+
+      {/* 2. SECTION: My Health Vault (Requirement 1) */}
+      <div className="bg-[var(--mc-card)] rounded-3xl p-5 border-2 border-[var(--mc-primary)]/40 shadow-[var(--mc-glow)] space-y-3.5 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--mc-primary)]/10 rounded-full blur-xl pointer-events-none" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-[var(--mc-btn-gradient)] flex items-center justify-center text-white shadow-md shrink-0">
+              <FolderLock className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-extrabold text-base text-[var(--mc-text-primary)]">
+                  My Health Vault
+                </h2>
+                <span className="px-2 py-0.5 rounded-md bg-[var(--mc-chip-bg)] border border-[var(--mc-primary)]/40 text-[10px] font-mono text-[var(--mc-primary)] font-bold">
+                  AES-256
+                </span>
+              </div>
+              <p className="text-xs text-[var(--mc-text-secondary)]">
+                Securely store lab reports, ultrasound scans & health vitals encrypted on your device.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={onOpenVault}
+            className="w-full sm:w-auto px-5 py-3 rounded-2xl cyber-gradient-btn text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg hover:scale-102 active:scale-98 transition-all cursor-pointer shrink-0"
+          >
+            <span>Open Health Vault</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Hidden File Input for Profile Photo Upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        onChange={handlePhotoUpload}
+        className="hidden"
+        aria-label="Upload profile photo"
+      />
+
+      {/* Profile Photo Option Card */}
+      <div className="cyber-card rounded-2xl p-4 sm:p-5 shadow-sm space-y-3.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-[var(--mc-primary)]">
+            <Camera className="w-4 h-4" />
+            <h3 className="font-bold text-sm text-[var(--mc-text-primary)]">
+              {t.profilePhotoTitle}
+            </h3>
+          </div>
+          {isProcessingPhoto && (
+            <span className="text-[11px] font-mono text-[var(--mc-primary)] animate-pulse">
+              Optimizing image...
+            </span>
+          )}
+        </div>
+
+        <p className="text-xs text-[var(--mc-text-secondary)]">
+          Add your photo or select a maternal avatar to personalize your MomCare experience.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center gap-4 pt-1">
+          {/* Avatar Preview */}
+          <div className="relative group shrink-0">
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="w-20 h-20 rounded-3xl bg-[var(--mc-surface)] border-2 border-[var(--mc-primary)] shadow-[var(--mc-glow)] flex items-center justify-center overflow-hidden cursor-pointer"
+            >
+              {photoUrl ? (
+                <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center text-[var(--mc-text-muted)] bg-[var(--mc-chip-bg)]">
+                  <Camera className="w-7 h-7 stroke-[1.8] text-[var(--mc-primary)]" />
+                  <span className="text-[9px] font-mono uppercase mt-1">No Photo</span>
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[var(--mc-btn-gradient)] text-white flex items-center justify-center shadow-md border-2 border-[var(--mc-surface)] cursor-pointer hover:scale-110 transition-transform"
+              title="Upload new photo"
+            >
+              <Upload className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Action Buttons & Presets */}
+          <div className="flex-1 space-y-2.5 w-full text-center sm:text-left">
+            <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isProcessingPhoto}
+                className="px-3.5 py-2 rounded-xl bg-[var(--mc-btn-gradient)] text-white text-xs font-bold transition-all shadow-xs hover:shadow-md cursor-pointer flex items-center gap-1.5 active:scale-95"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>{t.uploadPhotoBtn}</span>
+              </button>
+
+              {photoUrl && (
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  className="px-3 py-2 rounded-xl border border-[var(--mc-card-border)] hover:border-[#FF003C] hover:text-[#FF003C] text-[var(--mc-text-secondary)] text-xs font-semibold transition-all cursor-pointer"
+                >
+                  {t.removePhotoBtn}
+                </button>
+              )}
+            </div>
+
+            {/* Quick Maternal Avatar Presets */}
+            <div className="space-y-1.5 pt-1">
+              <span className="text-[11px] font-mono font-medium text-[var(--mc-text-muted)] block">
+                {t.chooseAvatarPreset}:
+              </span>
+              <div className="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
+                {[
+                  { emoji: '🌸', label: 'Bloom' },
+                  { emoji: '🤰', label: 'Expecting' },
+                  { emoji: '🤱', label: 'Nurture' },
+                  { emoji: '💖', label: 'Radiant' },
+                  { emoji: '👶', label: 'Angel' },
+                ].map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSelectPresetAvatar(preset.emoji)}
+                    className="w-9 h-9 rounded-xl bg-[var(--mc-surface)] border border-[var(--mc-card-border)] hover:border-[var(--mc-primary)] hover:scale-110 flex items-center justify-center text-lg transition-all shadow-2xs cursor-pointer active:scale-95"
+                    title={`Select ${preset.label} avatar`}
+                  >
+                    <span>{preset.emoji}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Language Switcher in Settings (Part 2 requirement) */}

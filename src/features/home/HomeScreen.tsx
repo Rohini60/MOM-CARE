@@ -23,6 +23,8 @@ import {
   ShieldAlert,
   Edit3,
   HeartPulse,
+  FolderLock,
+  Lock,
 } from 'lucide-react';
 import type { UserProfile, Checkin, CareTask, SymptomRecord } from '../../types';
 import { calculatePregnancyProgress } from '../../utils/pregnancy';
@@ -32,6 +34,21 @@ import { updateUserProfile } from '../../services/firebase/userService';
 import { requestHomeInsight, type HomeInsightResponse } from '../../services/ai/client';
 import { UrgentSafetyModal } from '../../components/UrgentSafetyModal';
 import { useTranslation } from '../../translations';
+import { TodaysFocusCard } from '../habits/TodaysFocusCard';
+import { HowMomCareLearnsModal } from '../habits/HowMomCareLearnsModal';
+import {
+  loadUserBanditState,
+  chooseTodaysHabits,
+  recordHabitCompletion,
+  recordHabitFeedback,
+  evaluateTrendBonus,
+  type UserBanditState,
+} from '../../services/habits/banditEngine';
+import {
+  getActiveHealthProfile,
+  isVaultCurrentlyUnlocked,
+  isVaultConfigured,
+} from '../../services/vault/vaultService';
 
 interface HomeScreenProps {
   profile: UserProfile | null;
@@ -44,6 +61,7 @@ interface HomeScreenProps {
   onOpenAiChat: (prompt?: string) => void;
   onOpenReports: () => void;
   onOpenVitals?: () => void;
+  onOpenVault?: () => void;
 }
 
 type MoodOption = 'good' | 'okay' | 'not_well' | 'pain';
@@ -59,10 +77,49 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenAiChat,
   onOpenReports,
   onOpenVitals,
+  onOpenVault,
 }) => {
   const { language, t } = useTranslation();
   const progress = calculatePregnancyProgress(profile?.dueDate);
   const weekData = getPregnancyWeekData(progress.weeks);
+
+  // Health Vault & Health Profile integration
+  const isVaultUnlocked = isVaultCurrentlyUnlocked();
+  const activeHealthProfile = getActiveHealthProfile();
+
+  // Habit Bandit Engine state (Thompson sampling contextual bandit)
+  const [banditState, setBanditState] = useState<UserBanditState>(() =>
+    loadUserBanditState(profile?.id || 'guest')
+  );
+  const [showHowItLearnsModal, setShowHowItLearnsModal] = useState(false);
+
+  // Evaluate any 2-3 day trend bonuses when checkins change
+  useEffect(() => {
+    if (recentCheckins.length >= 2) {
+      setBanditState((prev) => evaluateTrendBonus(prev, recentCheckins));
+    }
+  }, [recentCheckins]);
+
+  // Today's 3 habits selected safely via contextual bandit
+  const todaysBanditHabits = useMemo(() => {
+    return chooseTodaysHabits(
+      banditState,
+      progress.weeks,
+      activeHealthProfile,
+      recentCheckins,
+      'green'
+    );
+  }, [banditState, progress.weeks, activeHealthProfile, recentCheckins]);
+
+  const handleToggleBanditHabit = (habitId: string, current: boolean) => {
+    const updated = recordHabitCompletion(banditState, habitId, !current);
+    setBanditState({ ...updated });
+  };
+
+  const handleBanditFeedback = (habitId: string, feedback: 'helped' | 'not_for_me') => {
+    const updated = recordHabitFeedback(banditState, habitId, feedback);
+    setBanditState({ ...updated });
+  };
 
   // Today checkin check
   const todayStr = new Date().toDateString();
@@ -339,7 +396,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     const chips: string[] = [];
     chips.push(`Week ${progress.weeks}`);
 
-    if (profile?.medicalConditions && profile.medicalConditions.length > 0 && !profile.medicalConditions.includes('Prefer not to say')) {
+    if (activeHealthProfile?.isVaultUnlocked) {
+      if (activeHealthProfile.latestHemoglobin) {
+        chips.push(`Vault Hb: ${activeHealthProfile.latestHemoglobin.value} g/dL`);
+      }
+      if (activeHealthProfile.doctorRestrictions.length > 0) {
+        chips.push(`Vault: ${activeHealthProfile.doctorRestrictions[0]}`);
+      }
+      if (activeHealthProfile.latestBP) {
+        chips.push(`Vault BP: ${activeHealthProfile.latestBP.systolic}/${activeHealthProfile.latestBP.diastolic}`);
+      }
+    } else if (profile?.medicalConditions && profile.medicalConditions.length > 0 && !profile.medicalConditions.includes('Prefer not to say')) {
       chips.push(`Baseline: ${profile.medicalConditions[0]}`);
     }
 
@@ -352,15 +419,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       if (last.sleep) chips.push(`Recent sleep: ${last.sleep}`);
     }
 
-    return chips.slice(0, 3);
-  }, [progress.weeks, profile?.medicalConditions, todayCheckin, recentCheckins]);
+    return chips.slice(0, 4);
+  }, [progress.weeks, profile?.medicalConditions, todayCheckin, recentCheckins, activeHealthProfile]);
 
   // Smart Nudges (max 2)
   const smartNudges = useMemo(() => {
     const nudges: Array<{ id: string; text: string; icon: string; action?: () => void }> = [];
 
+    // Nudge 0: Old value reminder from Health Vault
+    if (activeHealthProfile?.oldValueReminders && activeHealthProfile.oldValueReminders.length > 0) {
+      nudges.push({
+        id: 'old_vault_value',
+        text: activeHealthProfile.oldValueReminders[0],
+        icon: '⏱️',
+        action: onOpenVault,
+      });
+    }
+
     // Nudge 1: No check-in today
-    if (!hasCheckedInToday) {
+    if (!hasCheckedInToday && nudges.length < 2) {
       nudges.push({
         id: 'no_checkin',
         text: t.nudgeCheckin,
@@ -370,7 +447,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
 
     // Nudge 2: Baby movement not logged after week 28
-    if (isAfter28 && (!todayCheckin || !todayCheckin.babyMovement || todayCheckin.babyMovement === 'not_felt_yet')) {
+    if (isAfter28 && (!todayCheckin || !todayCheckin.babyMovement || todayCheckin.babyMovement === 'not_felt_yet') && nudges.length < 2) {
       nudges.push({
         id: 'movement',
         text: t.nudgeMovement,
@@ -389,7 +466,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
 
     return nudges.slice(0, 2);
-  }, [hasCheckedInToday, isAfter28, todayCheckin, t]);
+  }, [hasCheckedInToday, isAfter28, todayCheckin, t, activeHealthProfile, onOpenVault]);
 
   // Gentle missing detail item (1 only)
   const missingDetailItem = useMemo(() => {
@@ -534,6 +611,45 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <h1 className="text-base sm:text-lg font-bold text-[var(--mc-text-primary)] leading-snug relative z-10">
           {dynamicGreeting}
         </h1>
+      </div>
+
+      {/* Small Home Card: Complete your Health Vault (Requirement 1 & 4) */}
+      <div
+        onClick={onOpenVault}
+        className="cyber-card rounded-2xl p-3.5 sm:p-4 border border-[var(--mc-primary)]/40 shadow-xs flex items-center justify-between gap-3 cursor-pointer hover:border-[var(--mc-primary)] transition-all group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[var(--mc-chip-bg)] border border-[var(--mc-primary)] text-[var(--mc-primary)] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <FolderLock className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-xs sm:text-sm text-[var(--mc-text-primary)]">
+                {isVaultUnlocked ? 'Health Vault Active' : 'Complete your Health Vault'}
+              </h3>
+              <span className="px-2 py-0.2 rounded-md bg-[var(--mc-chip-bg)] text-[10px] font-mono text-[var(--mc-primary)] font-bold">
+                {isVaultUnlocked ? `${activeHealthProfile?.completenessPercentage || 0}% Complete` : 'Encrypted'}
+              </span>
+            </div>
+            <p className="text-[11px] text-[var(--mc-text-secondary)]">
+              {isVaultUnlocked
+                ? 'Your confirmed reports & metrics are personalizing MomCare guidance.'
+                : 'Unlock your Health Vault for more personal guidance.'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onOpenVault) onOpenVault();
+          }}
+          className="px-3 py-1.5 rounded-xl cyber-gradient-btn text-white text-xs font-bold flex items-center gap-1 shadow-xs shrink-0 group-hover:translate-x-0.5 transition-transform"
+        >
+          <span>{isVaultUnlocked ? 'View Vault' : 'Open Vault'}</span>
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {/* 2. "HOW ARE YOU TODAY?" CARD - One-tap mood row & Guided Step-by-Step Flow */}
@@ -1083,61 +1199,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         )}
       </div>
 
-      {/* 4. TODAY'S FOCUS (3 tasks based on her situation) */}
-      <div className="cyber-card rounded-3xl p-4 sm:p-5 shadow-[0_0_20px_rgba(255,26,117,0.14)] space-y-3 transition-all">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-bold text-sm sm:text-base text-[#FFF0F6]">
-              {t.todaysFocusTitle}
-            </h2>
-            <p className="text-[11px] text-[#E3BCCC]">
-              {t.todaysFocusCount.replace('{completed}', String(completedFocusIndices.length))}
-            </p>
-          </div>
-          <span className="text-xs font-mono font-bold text-[#10E599] bg-[#0C241B] px-3 py-1 rounded-full border border-[#10E599]/40 shadow-[0_0_8px_rgba(16,229,153,0.3)]">
-            {completedFocusIndices.length === 3 ? '3/3 Done 🌸' : `${completedFocusIndices.length}/3`}
-          </span>
-        </div>
+      {/* 4. TODAY'S FOCUS (Contextual Bandit Learning Habit Engine) */}
+      <TodaysFocusCard
+        habits={todaysBanditHabits}
+        isColdStart={banditState.totalDaysLogged <= 7}
+        onToggleComplete={handleToggleBanditHabit}
+        onFeedback={handleBanditFeedback}
+        onOpenHowItLearns={() => setShowHowItLearnsModal(true)}
+      />
 
-        <div className="space-y-2">
-          {focusTasksList.map((taskText, idx) => {
-            const isDone = completedFocusIndices.includes(idx);
-            return (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => toggleFocusTask(idx)}
-                className={`w-full p-3 rounded-2xl border text-left transition-all flex items-center justify-between gap-3 min-h-[48px] active:scale-98 ${
-                  isDone
-                    ? 'bg-[#0E2018] border-[#10E599]/40 text-[#A38495]'
-                    : 'bg-[#180C1E] border-[#FF1A75]/25 text-[#FFF0F6] hover:bg-[#230F29] hover:border-[#FF1A75]/50'
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${
-                      isDone
-                        ? 'bg-[#10E599] border-[#10E599] text-[#0A1A12] shadow-[0_0_6px_#10E599]'
-                        : 'border-[#FF1A75]/40 bg-[#25102C]'
-                    }`}
-                  >
-                    {isDone && <Check className="w-4 h-4 stroke-[3]" />}
-                  </div>
-                  <span className={`text-xs font-medium leading-snug ${isDone ? 'line-through text-[#A38495]' : 'text-[#FFF0F6]'}`}>
-                    {taskText}
-                  </span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {completedFocusIndices.length === 3 && (
-          <p className="text-xs text-[#10E599] font-mono font-semibold text-center bg-[#0C241B] p-2.5 rounded-xl border border-[#10E599]/30">
-            {t.allTasksDone}
-          </p>
-        )}
-      </div>
+      {/* How MomCare Learns Modal (Explainability & Personalization Reset) */}
+      <HowMomCareLearnsModal
+        isOpen={showHowItLearnsModal}
+        onClose={() => setShowHowItLearnsModal(false)}
+        banditState={banditState}
+        onStateUpdated={(newState) => setBanditState({ ...newState })}
+      />
       </div>
 
       {/* DESKTOP GRID ROW 3: Trend row, Smart Nudges, Ask MomCare shortcuts, Weekly Snapshot in 3-col grid */}
@@ -1381,6 +1458,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         emergencyReason={urgentEmergencyReason || undefined}
         doctorName={profile?.doctorName || undefined}
         doctorPhone={profile?.doctorPhone || undefined}
+        familyContactName={profile?.familyContactName || undefined}
         familyContactPhone={profile?.familyContactPhone || undefined}
       />
     </div>

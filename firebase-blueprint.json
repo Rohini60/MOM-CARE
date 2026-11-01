@@ -8,6 +8,7 @@
         "id": { "type": "string", "maxLength": 128 },
         "email": { "type": "string", "maxLength": 256 },
         "displayName": { "type": "string", "maxLength": 128 },
+        "photoUrl": { "type": "string", "maxLength": 500000 },
         "communityAnonymous": { "type": "boolean" },
         "age": { "type": "number" },
         "dueDate": { "type": "string", "maxLength": 32 },

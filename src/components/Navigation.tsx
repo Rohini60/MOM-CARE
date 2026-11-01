@@ -1,9 +1,8 @@
 import React from 'react';
 import { Home, Sparkles, Users, CalendarCheck2, User, HeartPulse, HelpCircle, Presentation, Phone } from 'lucide-react';
 import { useTranslation, type Language } from '../translations';
-import { useTheme } from '../context/ThemeContext';
-import { ThemeQuickToggle } from './ThemeQuickToggle';
 import type { UserProfile } from '../types';
+import { MomCareLogo } from './MomCareLogo';
 
 export type TabType = 'home' | 'pregnancy' | 'community' | 'care' | 'profile';
 
@@ -95,7 +94,6 @@ export const TopAppBar: React.FC<{
   onLanguageChange,
 }) => {
   const { language, setLanguage, t } = useTranslation();
-  const { openThemeModal, theme } = useTheme();
 
   const handleLangSelect = (lang: Language) => {
     setLanguage(lang);
@@ -123,14 +121,13 @@ export const TopAppBar: React.FC<{
       )}
 
       <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-2xl bg-[var(--mc-btn-gradient)] flex items-center justify-center text-white shadow-[0_0_14px_var(--mc-primary-glow)] border border-white/30">
-            <HeartPulse className="w-5 h-5 stroke-[2.4] animate-pulse" />
-          </div>
+        {/* MomCare Best Maternal Logo & Brand Title */}
+        <div className="flex items-center gap-3">
+          <MomCareLogo size="sm" showText={false} />
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-black text-base text-[var(--mc-text-primary)] tracking-tight neon-text-glow">
-                MomCare
+              <span className="font-black text-base text-[var(--mc-text-primary)] tracking-tight neon-text-glow leading-none">
+                Mom<span className="text-[var(--mc-primary)] drop-shadow-[0_0_8px_var(--mc-primary-glow)]">Care</span>
               </span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[var(--mc-chip-bg)] border border-[var(--mc-chip-border)] text-[var(--mc-text-primary)] shadow-xs">
                 Wk {pregnancyWeek}
@@ -140,21 +137,6 @@ export const TopAppBar: React.FC<{
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Visible "Theme" Button with 🎨 icon opening the popup modal */}
-          <button
-            type="button"
-            onClick={openThemeModal}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-[var(--mc-card-border)] bg-[var(--mc-chip-bg)] text-[var(--mc-text-primary)] hover:border-[var(--mc-primary)] transition-all font-bold text-xs shadow-xs cursor-pointer active:scale-95"
-            title="Choose MomCare Look (Neon Blue / Neon Pink)"
-            aria-label="Choose MomCare Theme"
-          >
-            <span className="text-sm">🎨</span>
-            <span className="font-mono text-xs">Theme</span>
-            <span className="text-[10px] opacity-80">
-              {theme === 'neon-blue' ? '💙' : '💗'}
-            </span>
-          </button>
-
           {/* Always Visible Emergency Call Button (Safety Rule 5 - Never Changes Color) */}
           {onOpenEmergency && (
             <button

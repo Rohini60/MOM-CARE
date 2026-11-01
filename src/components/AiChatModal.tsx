@@ -107,11 +107,11 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
       // Ignore localStorage parse error
     }
 
-    // Default welcome message in mom-style
+    // Default welcome message introducing Buddy
     const welcomeByLang: Record<'en' | 'ta' | 'hi', string> = {
-      en: `Hello dear ${motherName}, I'm right here beside you for Week ${pregnancyWeek}. How are you and ${babyNickname} feeling today? You can ask me any question or tell me what to open in MomCare.`,
-      ta: `வணக்கம் அன்பு ${motherName}, கர்ப்பத்தின் ${pregnancyWeek}-வது வாரத்தில் உங்களுடன் துணையாக இருக்கிறேன். நீங்களும் ${babyNickname}-ம் இன்று எப்படி இருக்கிறீர்கள்? உங்கள் சந்தேகங்களைக் கேட்கலாம் அல்லது MomCare-ல் தேவையான பகுதியைத் திறக்கச் சொல்லலாம்.`,
-      hi: `नमस्ते प्यारी ${motherName}, मैं गर्भावस्था के ${pregnancyWeek}वें हफ्ते में आपके साथ हूँ। आज आप और ${babyNickname} कैसा महसूस कर रहे हैं? मुझसे कोई भी सवाल पूछें या ऐप में कुछ भी खोलने को कहें।`,
+      en: `Hello dear ${motherName}, I'm Buddy! I'm right here beside you for Week ${pregnancyWeek}. I can guide you through every part of MomCare, answer questions, or navigate and control the app for you. What would you like to explore?`,
+      ta: `வணக்கம் அன்பு ${motherName}, நான் Buddy! கர்ப்பத்தின் ${pregnancyWeek}-வது வாரத்தில் உங்களுடன் இருக்கிறேன். உங்கள் கேள்விகளுக்கு பதிலளிக்கவும், MomCare-ன் எந்த பகுதியையும் இயக்கவும் நான் தயார். நான் உங்களுக்கு எப்படி உதவட்டும்?`,
+      hi: `नमस्ते प्यारी ${motherName}, मैं Buddy हूँ! गर्भावस्था के ${pregnancyWeek}वें हफ्ते में आपके साथ। मैं आपके सवालों के जवाब देने और ऐप के किसी भी हिस्से को कंट्रोल करने के लिए तैयार हूँ। आज मैं आपकी क्या मदद करूँ?`,
     };
 
     setMessages([
@@ -151,37 +151,43 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Example action chips for first screen
+  // Example action chips for first screen showcasing Buddy's app control
   const exampleChips = [
     {
-      labelEn: 'Open Baby Development',
-      labelTa: 'குழந்தை வளர்ச்சியைத் திற',
-      labelHi: 'शिशु विकास खोलें',
+      labelEn: '📱 Switch to Tablet View',
+      labelTa: '📱 டேப்லெட் மோடுக்கு மாற்று',
+      labelHi: '📱 टैबलेट मोड में बदलें',
+      prompt: lang === 'ta' ? 'டேப்லெட் மோடுக்கு மாற்று' : lang === 'hi' ? 'टैबलेट मोड में बदलें' : 'Switch to tablet mode',
+    },
+    {
+      labelEn: '🩺 Check Vitals (ML)',
+      labelTa: '🩺 வைட்டல்ஸ் பரிசோதனை',
+      labelHi: '🩺 वाइटल्स चेक',
+      prompt: lang === 'ta' ? 'வைட்டல்ஸ் பரிசோதனைப் பக்கத்தைத் திற' : lang === 'hi' ? 'वाइटल्स चेक खोलो' : 'Check my vitals',
+    },
+    {
+      labelEn: '👶 Open Baby Development',
+      labelTa: '👶 குழந்தை வளர்ச்சி திற',
+      labelHi: '👶 शिशु विकास खोलें',
       prompt: lang === 'ta' ? 'குழந்தை வளர்ச்சியைத் திற' : lang === 'hi' ? 'शिशु विकास खोलें' : 'Open baby development',
     },
     {
-      labelEn: 'Start Breathing Exercise',
-      labelTa: 'சுவாசப் பயிற்சி தொடங்கு',
-      labelHi: 'सांस का अभ्यास शुरू करें',
+      labelEn: '🫁 Start Breathing Exercise',
+      labelTa: '🫁 சுவாசப் பயிற்சி தொடங்கு',
+      labelHi: '🫁 सांस का अभ्यास शुरू करें',
       prompt: lang === 'ta' ? 'சுவாசப் பயிற்சி தொடங்கு' : lang === 'hi' ? 'शांत श्वास अभ्यास शुरू करें' : 'Start breathing exercise',
     },
     {
-      labelEn: theme === 'neon-pink' ? 'Change to Neon Blue' : 'Change to Neon Pink',
-      labelTa: theme === 'neon-pink' ? 'நீல நிறத்திற்கு மாற்று' : 'இளஞ்சிவப்பு நிறத்திற்கு மாற்று',
-      labelHi: theme === 'neon-pink' ? 'नियॉन ब्लू में बदलें' : 'नियॉन पिंक में बदलें',
+      labelEn: '📅 Jump to Week 28',
+      labelTa: '📅 வாரம் 28-க்கு செல்',
+      labelHi: '📅 हफ्ते 28 पर जाएँ',
+      prompt: lang === 'ta' ? 'வாரம் 28 காட்டு' : lang === 'hi' ? 'हफ्ता 28 दिखाओ' : 'Jump to week 28',
+    },
+    {
+      labelEn: theme === 'neon-pink' ? '💙 Switch to Neon Blue' : '💗 Switch to Neon Pink',
+      labelTa: theme === 'neon-pink' ? '💙 நீல நிறத்திற்கு மாற்று' : '💗 இளஞ்சிவப்புக்கு மாற்று',
+      labelHi: theme === 'neon-pink' ? '💙 नियॉन ब्लू में बदलें' : '💗 नियॉन पिंक में बदलें',
       prompt: theme === 'neon-pink' ? 'Change theme to neon blue' : 'Change theme to neon pink',
-    },
-    {
-      labelEn: 'Switch to தமிழ்',
-      labelTa: 'Switch to English',
-      labelHi: 'तमिल में बदलें',
-      prompt: lang === 'ta' ? 'Switch to English' : 'Switch to Tamil',
-    },
-    {
-      labelEn: 'Print Doctor Summary',
-      labelTa: 'மருத்துவர் சுருக்கம் அச்சிடு',
-      labelHi: 'डॉक्टर रिपोर्ट प्रिंट करें',
-      prompt: lang === 'ta' ? 'மருத்துவர் சுருக்கம் அச்சிடு' : lang === 'hi' ? 'डॉक्टर सारांश प्रिंट करें' : 'Print doctor summary',
     },
   ];
 
@@ -410,7 +416,7 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
           <div className="w-8 h-8 rounded-full bg-[var(--mc-btn-gradient)] flex items-center justify-center text-white ai-thinking-pulse">
             <Heart className="w-4 h-4 fill-white" />
           </div>
-          <span>Ask MomCare</span>
+          <span>Buddy AI</span>
           <Maximize2 className="w-4 h-4 text-[var(--mc-primary)]" />
         </button>
       </div>
@@ -441,14 +447,14 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-sm sm:text-base text-[var(--mc-text-primary)]">
-                  Ask MomCare
+                  Buddy
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-[var(--mc-chip-bg)] text-[var(--mc-primary)] border border-[var(--mc-chip-border)]">
-                  Wk {pregnancyWeek}
+                  MomCare AI · Wk {pregnancyWeek}
                 </span>
               </div>
               <p className="text-[11px] text-[var(--mc-text-secondary)]">
-                {lang === 'ta' ? 'அன்பான தோழி & வழிகாட்டி' : lang === 'hi' ? 'आपकी स्नेही साथी' : 'Kind maternal companion'}
+                {lang === 'ta' ? 'அன்பான வழிகாட்டி & உதவியாளர்' : lang === 'hi' ? 'आपकी स्नेही साथी और गाइड' : 'Your maternal companion & guide'}
               </p>
             </div>
           </div>
@@ -486,7 +492,7 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
               <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--mc-text-primary)]">
                 <Sparkles className="w-3.5 h-3.5 text-[var(--mc-primary)]" />
                 <span>
-                  {lang === 'ta' ? 'MomCare என்ன செய்யும்?' : lang === 'hi' ? 'MomCare क्या कर सकता है?' : 'What MomCare can do:'}
+                  {lang === 'ta' ? 'Buddy என்ன செய்யும்?' : lang === 'hi' ? 'Buddy क्या कर सकता है?' : 'What Buddy can do:'}
                 </span>
               </div>
               <p className="text-[11px] text-[var(--mc-text-secondary)]">
@@ -525,9 +531,9 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
                 >
                   <p className="whitespace-pre-line">{m.content}</p>
 
-                  {/* Red Emergency Card (Fixed Safety Trigger) */}
+                  {/* Red Emergency Card (Fixed Safety Trigger - Call Family or 108 Prompt) */}
                   {m.dangerAlert && (
-                    <div className="mt-3 p-3.5 rounded-2xl bg-red-950/80 border-2 border-red-500 text-white space-y-3 font-sans shadow-xl">
+                    <div className="mt-3 p-3.5 rounded-2xl bg-red-950/85 border-2 border-red-500 text-white space-y-3 font-sans shadow-xl">
                       <div className="flex items-center gap-2 text-red-300 font-bold text-xs uppercase tracking-wider">
                         <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
                         <span>
@@ -537,40 +543,46 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
 
                       <p className="text-xs text-red-100 font-semibold leading-relaxed">
                         {lang === 'ta'
-                          ? 'அருகிலுள்ள மருத்துவமனைக்கு உடனே செல்லவும் அல்லது 108 அழைக்கவும்.'
+                          ? 'அவசர நடவடிக்கை: இப்போது குடும்பத்தினர் அல்லது 108 ஆம்புலன்ஸை அழைக்க விரும்புகிறீர்களா?'
                           : lang === 'hi'
-                          ? 'कृपया तुरंत अपने नजदीकी अस्पताल जाएं या 108 पर कॉल करें।'
-                          : 'Go to your nearest hospital or call 108 immediately.'}
+                          ? 'आपातकालीन कार्रवाई: क्या आप अभी परिवार के सदस्यों या 108 एम्बुलेंस को कॉल करना चाहते हैं?'
+                          : 'Emergency Action: Would you like to call Family Members or 108 Ambulance right now?'}
                       </p>
 
                       <div className="grid grid-cols-1 gap-2 pt-1">
                         <a
-                          href={`tel:${m.dangerAlert.doctorPhone}`}
-                          className="min-h-[48px] px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-transform active:scale-95"
+                          href="tel:108"
+                          className="min-h-[48px] px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-transform active:scale-95"
                         >
                           <PhoneCall className="w-4 h-4" />
                           <span>
-                            {lang === 'ta' ? 'மருத்துவரை அழைக்கவும்' : lang === 'hi' ? 'डॉक्टर को कॉल करें' : 'Call My Doctor'} ({m.dangerAlert.doctorPhone})
+                            {lang === 'ta' ? 'ஆம், 108 அழைக்கவும் (ஆம்புலன்ஸ்)' : lang === 'hi' ? 'हाँ, 108 पर कॉल करें (एम्बुलेंस)' : 'Yes, Call 108 (Ambulance)'}
                           </span>
                         </a>
 
-                        <div className="grid grid-cols-2 gap-2">
+                        {profile?.familyContactPhone && (
                           <a
-                            href="tel:108"
-                            className="min-h-[48px] px-3 py-2 rounded-xl bg-red-700 hover:bg-red-800 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-transform active:scale-95"
+                            href={`tel:${profile.familyContactPhone}`}
+                            className="min-h-[48px] px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-transform active:scale-95"
                           >
                             <Phone className="w-4 h-4" />
-                            <span>108 (Ambulance)</span>
+                            <span>
+                              {lang === 'ta' ? 'ஆம், குடும்பத்தினரை அழைக்கவும்' : lang === 'hi' ? 'हाँ, परिवार के सदस्य को कॉल करें' : 'Yes, Call Family'} ({profile.familyContactName || 'Family'})
+                            </span>
                           </a>
+                        )}
 
+                        {m.dangerAlert.doctorPhone && m.dangerAlert.doctorPhone !== '108' && (
                           <a
-                            href="tel:112"
-                            className="min-h-[48px] px-3 py-2 rounded-xl bg-red-800 hover:bg-red-900 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-transform active:scale-95"
+                            href={`tel:${m.dangerAlert.doctorPhone}`}
+                            className="min-h-[42px] px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md cursor-pointer transition-transform active:scale-95"
                           >
-                            <Phone className="w-4 h-4" />
-                            <span>112 (Emergency)</span>
+                            <Phone className="w-3.5 h-3.5" />
+                            <span>
+                              {lang === 'ta' ? 'மருத்துவரை அழைக்கவும்' : lang === 'hi' ? 'डॉक्टर को कॉल करें' : 'Call Doctor'} ({m.dangerAlert.doctorPhone})
+                            </span>
                           </a>
-                        </div>
+                        )}
                       </div>
                     </div>
                   )}

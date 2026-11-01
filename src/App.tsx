@@ -43,10 +43,11 @@ import { AuthModal } from './features/auth/AuthModal';
 import { OnboardingFlow } from './features/onboarding/OnboardingFlow';
 import { VitalsCheckScreen } from './features/vitals/VitalsCheckScreen';
 
-import { Smartphone, Sparkles, Wifi, Battery, Signal, Activity, FileText, HeartPulse } from 'lucide-react';
+import { Smartphone, Sparkles, Activity, FileText, HeartPulse } from 'lucide-react';
 import { useTheme } from './context/ThemeContext';
 import { FloatingThemeButton } from './components/FloatingThemeButton';
 import { BreathingExerciseModal } from './components/BreathingExerciseModal';
+import { DeviceModeSwitcher, type DeviceMode } from './components/DeviceModeSwitcher';
 import type { AppAction } from './services/ai/commandEngine';
 
 export default function App() {
@@ -69,8 +70,19 @@ export default function App() {
   const [selectedJourneyWeek, setSelectedJourneyWeek] = useState<number>(24);
   const [subView, setSubView] = useState<'default' | 'symptoms' | 'reports' | 'doctor_summary' | 'vitals'>('default');
 
-  // Phone frame simulation toggle
-  const [isPhoneFrame, setIsPhoneFrame] = useState(false);
+  // Device Mode switcher state (mobile | tablet | desktop) with localStorage persistence
+  const [deviceMode, setDeviceMode] = useState<DeviceMode>(() => {
+    const saved = localStorage.getItem('momcare_device_mode');
+    if (saved === 'mobile' || saved === 'tablet' || saved === 'desktop') {
+      return saved as DeviceMode;
+    }
+    return window.innerWidth >= 1024 ? 'desktop' : window.innerWidth >= 640 ? 'tablet' : 'mobile';
+  });
+
+  const handleDeviceModeChange = useCallback((mode: DeviceMode) => {
+    setDeviceMode(mode);
+    localStorage.setItem('momcare_device_mode', mode);
+  }, []);
 
   // Modals
   const [isAiChatOpen, setIsAiChatOpen] = useState(false);
@@ -272,6 +284,12 @@ export default function App() {
           }}
         />
 
+        {/* Device Viewport Mode Switcher (Bottom Left Corner) */}
+        <DeviceModeSwitcher
+          deviceMode={deviceMode}
+          onDeviceModeChange={handleDeviceModeChange}
+        />
+
         {/* Floating Theme Button always visible on Welcome / Auth screens */}
         <FloatingThemeButton profile={profile} />
       </>
@@ -309,6 +327,12 @@ export default function App() {
             setPendingAuthUser(null);
           }}
         />
+        {/* Device Viewport Mode Switcher (Bottom Left Corner) */}
+        <DeviceModeSwitcher
+          deviceMode={deviceMode}
+          onDeviceModeChange={handleDeviceModeChange}
+        />
+
         {/* Floating Theme Button always visible on Onboarding screens */}
         <FloatingThemeButton profile={profile} />
       </>
@@ -550,8 +574,8 @@ export default function App() {
               setActiveTab('home');
               setSubView('default');
             }}
-            isPhoneFrame={isPhoneFrame}
-            onTogglePhoneFrame={() => setIsPhoneFrame(!isPhoneFrame)}
+            isPhoneFrame={deviceMode === 'mobile'}
+            onTogglePhoneFrame={() => handleDeviceModeChange(deviceMode === 'mobile' ? 'desktop' : 'mobile')}
           />
         );
 
@@ -718,6 +742,35 @@ export default function App() {
       case 'show_ambulance':
         window.location.href = 'tel:108';
         break;
+      case 'switch_device_mode':
+        if (action.payload?.deviceMode) {
+          handleDeviceModeChange(action.payload.deviceMode);
+        }
+        break;
+      case 'select_pregnancy_week':
+        if (action.payload?.week) {
+          setSelectedJourneyWeek(action.payload.week);
+          setActiveTab('pregnancy');
+          setSubView('default');
+        }
+        break;
+      case 'select_baby_tab':
+        setActiveTab('pregnancy');
+        setSubView('default');
+        break;
+      case 'navigate_symptoms':
+      case 'start_symptom_log':
+        setSubView('symptoms');
+        break;
+      case 'start_vitals_check':
+        setSubView('vitals');
+        break;
+      case 'open_demo_scenarios':
+        setIsDemoModalOpen(true);
+        break;
+      case 'open_presentation':
+        setIsPresentationOpen(true);
+        break;
       case 'logout':
         handleLogout();
         break;
@@ -737,10 +790,18 @@ export default function App() {
     return 'home';
   };
 
+  const isSimulated = deviceMode === 'mobile' || deviceMode === 'tablet';
+
   return (
-    <div className={`min-h-screen bg-[var(--mc-bg)] text-[var(--mc-text-primary)] flex ${isPhoneFrame ? 'items-center justify-center p-0 sm:p-6 bg-gradient-to-br from-[var(--mc-bg)] via-[var(--mc-surface)] to-[var(--mc-bg)]' : 'flex-col lg:flex-row'}`}>
-      {/* Desktop Fixed Left Sidebar (>= 1024px, hidden in phone simulation mode) */}
-      {!isPhoneFrame && (
+    <div
+      className={`min-h-screen bg-[var(--mc-bg)] text-[var(--mc-text-primary)] flex transition-colors duration-300 ${
+        isSimulated
+          ? 'items-center justify-center p-2 sm:p-6 bg-gradient-to-br from-[var(--mc-bg)] via-[var(--mc-surface)] to-[var(--mc-bg)]'
+          : 'flex-col lg:flex-row'
+      }`}
+    >
+      {/* Desktop Fixed Left Sidebar (shown only when in Desktop mode on lg screens) */}
+      {deviceMode === 'desktop' && (
         <DesktopSidebar
           profile={profile}
           pregnancyWeek={currentWeek}
@@ -756,20 +817,13 @@ export default function App() {
       {/* Main Content Area: Responsive across phones, tablets, and desktop */}
       <div
         className={`w-full bg-[var(--mc-bg)] flex flex-col relative transition-all duration-300 ${
-          isPhoneFrame
+          deviceMode === 'mobile'
             ? 'max-w-[412px] h-[92vh] max-h-[890px] rounded-[36px] shadow-2xl border-[6px] border-[var(--mc-primary)]/40 overflow-hidden neon-glow-theme'
+            : deviceMode === 'tablet'
+            ? 'max-w-[820px] h-[92vh] max-h-[920px] rounded-[28px] shadow-2xl border-[6px] border-[var(--mc-primary)]/40 overflow-hidden neon-glow-theme'
             : 'flex-1 min-h-screen'
         }`}
       >
-        {/* Android Status Bar (shown only on mobile view or phone frame) */}
-        <div className={`bg-[var(--mc-surface)] px-5 pt-2 pb-1 items-center justify-between text-[11px] font-mono text-[var(--mc-text-secondary)] select-none border-b border-[var(--mc-card-border)] ${isPhoneFrame ? 'flex' : 'flex lg:hidden'}`}>
-          <span className="tracking-wider">09:41 · 5G</span>
-          <div className="flex items-center gap-1.5 text-[var(--mc-text-primary)]">
-            <Signal className="w-3.5 h-3.5" />
-            <Wifi className="w-3.5 h-3.5" />
-            <Battery className="w-4 h-4 text-[var(--mc-primary)]" />
-          </div>
-        </div>
 
         {/* Top App Bar with MomCare branding & conditional demo controls */}
         <TopAppBar
@@ -779,8 +833,8 @@ export default function App() {
           onOpenDemo={() => setIsDemoModalOpen(true)}
           onOpenPresentation={() => setIsPresentationOpen(true)}
           onOpenEmergency={() => setIsEmergencyModalOpen(true)}
-          isPhoneFrame={isPhoneFrame}
-          onTogglePhoneFrame={() => setIsPhoneFrame(!isPhoneFrame)}
+          isPhoneFrame={deviceMode === 'mobile'}
+          onTogglePhoneFrame={() => handleDeviceModeChange(deviceMode === 'mobile' ? 'desktop' : 'mobile')}
           isDemoMode={isDemoMode}
           onExitDemo={() => {
             setIsDemoMode(false);
@@ -810,22 +864,26 @@ export default function App() {
           </div>
         </main>
 
-        {/* Bottom Navigation: Phone & Tablet (hidden on desktop >=1024px) */}
-        <BottomNavigation
-          activeTab={activeTab}
-          onTabChange={(tab) => {
-            setActiveTab(tab);
-            setSubView('default');
-          }}
-          onOpenAiChat={() => handleOpenAiChat()}
-          onOpenDemo={() => setIsDemoModalOpen(true)}
-          pregnancyWeek={currentWeek}
-        />
-
-        {/* Navigation Pill Indicator (mobile/phone simulation only) */}
-        <div className={`bg-[#FFFFFF] pb-1.5 justify-center safe-area-bottom ${isPhoneFrame ? 'flex' : 'flex lg:hidden'}`}>
-          <div className="w-32 h-1 bg-[#352F35]/20 rounded-full" />
+        {/* Bottom Navigation: Phone & Tablet (hidden on desktop mode when screen is >=1024px) */}
+        <div className={deviceMode === 'desktop' ? 'block lg:hidden' : 'block'}>
+          <BottomNavigation
+            activeTab={activeTab}
+            onTabChange={(tab) => {
+              setActiveTab(tab);
+              setSubView('default');
+            }}
+            onOpenAiChat={() => handleOpenAiChat()}
+            onOpenDemo={() => setIsDemoModalOpen(true)}
+            pregnancyWeek={currentWeek}
+          />
         </div>
+
+        {/* Navigation Pill Indicator (mobile/tablet simulation only) */}
+        {isSimulated && (
+          <div className="bg-[#FFFFFF] pb-1.5 justify-center safe-area-bottom flex">
+            <div className="w-32 h-1 bg-[#352F35]/20 rounded-full" />
+          </div>
+        )}
       </div>
 
       {/* Global AI Chat Modal / Right Docked Panel */}
@@ -862,6 +920,24 @@ export default function App() {
         isOpen={isPresentationOpen}
         onClose={() => setIsPresentationOpen(false)}
         onOpenLiveDemo={() => setIsDemoModalOpen(true)}
+      />
+
+      {/* Urgent Emergency Safety Call Modal (Prompts to call Family or 108) */}
+      <UrgentSafetyModal
+        isOpen={isEmergencyModalOpen}
+        onClose={() => setIsEmergencyModalOpen(false)}
+        doctorName={profile?.doctorName || undefined}
+        doctorPhone={profile?.doctorPhone || undefined}
+        clinicName={profile?.clinicName || undefined}
+        emergencyContact={profile?.emergencyContact || undefined}
+        familyContactName={profile?.familyContactName || undefined}
+        familyContactPhone={profile?.familyContactPhone || undefined}
+      />
+
+      {/* Device Mode Switcher (Mobile, Tablet, Desktop) Fixed at Bottom Left Corner */}
+      <DeviceModeSwitcher
+        deviceMode={deviceMode}
+        onDeviceModeChange={handleDeviceModeChange}
       />
 
       {/* Floating Theme Button always visible on all logged-in screens */}

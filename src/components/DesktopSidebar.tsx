@@ -14,14 +14,17 @@ import {
   LogOut,
   Globe,
   ChevronRight,
+  FolderLock,
 } from 'lucide-react';
 import { useTranslation, type Language } from '../translations';
 import type { UserProfile } from '../types';
 import { ThemeQuickToggle } from './ThemeQuickToggle';
+import { MomCareLogo } from './MomCareLogo';
 
 export type DesktopNavTarget =
   | 'home'
   | 'vitals'
+  | 'vault'
   | 'checkin'
   | 'baby'
   | 'ask'
@@ -59,6 +62,7 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
   const menuItems = [
     { id: 'home' as DesktopNavTarget, label: t.navHome, icon: Home },
+    { id: 'vault' as DesktopNavTarget, label: 'Health Vault', icon: FolderLock, badge: 'Lock' },
     { id: 'vitals' as DesktopNavTarget, label: 'Vitals Check', icon: HeartPulse, badge: 'ML' },
     { id: 'checkin' as DesktopNavTarget, label: t.navDailyCheckin, icon: Activity },
     { id: 'baby' as DesktopNavTarget, label: t.navBabyDev, icon: Sparkles },
@@ -78,12 +82,10 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
         <div className="flex items-center justify-between mb-4 relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[var(--mc-btn-gradient)] flex items-center justify-center text-white shadow-[0_0_15px_var(--mc-primary-glow)] border border-white/30">
-              <HeartPulse className="w-6 h-6 stroke-[2.3] animate-pulse" />
-            </div>
+            <MomCareLogo size="md" showText={false} />
             <div>
               <span className="font-black text-lg text-[var(--mc-text-primary)] tracking-tight block leading-tight neon-text-glow">
-                MomCare
+                Mom<span className="text-[var(--mc-primary)] drop-shadow-[0_0_8px_var(--mc-primary-glow)]">Care</span>
               </span>
               <span className="text-[10px] text-[var(--mc-text-secondary)] font-mono tracking-widest uppercase">
                 AI Cyber-Companion
@@ -98,9 +100,17 @@ export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         {/* User Mini Profile */}
         <div className="p-3 rounded-2xl bg-[var(--mc-card)] border border-[var(--mc-card-border)] shadow-inner flex items-center justify-between relative z-10 backdrop-blur-xs">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-[var(--mc-btn-gradient)] text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-xs">
-              {motherName.charAt(0) || 'M'}
-            </div>
+            {profile?.photoUrl ? (
+              <img
+                src={profile.photoUrl}
+                alt={motherName}
+                className="w-8 h-8 rounded-xl object-cover border border-[var(--mc-primary)]/50 shrink-0 shadow-xs"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-xl bg-[var(--mc-btn-gradient)] text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-xs">
+                {motherName.charAt(0) || 'M'}
+              </div>
+            )}
             <div className="min-w-0">
               <p className="font-bold text-xs text-[var(--mc-text-primary)] truncate">{motherName}</p>
               <p className="text-[11px] text-[var(--mc-text-muted)] truncate font-mono">Baby: {babyNickname}</p>

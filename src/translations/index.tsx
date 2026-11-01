@@ -181,6 +181,14 @@ export interface Translations {
   callDoctorBtn: string;
   callAmbulanceBtn: string;
   callFamilyBtn: string;
+  emergencyCallQuestion: string;
+  emergencyYesCall108: string;
+  emergencyYesCallFamily: string;
+  emergencyNoNotNow: string;
+  profilePhotoTitle: string;
+  uploadPhotoBtn: string;
+  chooseAvatarPreset: string;
+  removePhotoBtn: string;
 
   // Profile & Settings
   profileTitle: string;
@@ -395,8 +403,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     checkinSavedSuccess: 'Check-in saved to your timeline!',
     safetyTriageBtn: 'Safety Triage',
     medicalReportsBtn: 'Medical Reports',
-    askMomCareBtn: 'Ask MomCare',
-    askMomCareDesc: 'MomCare AI remembers your week status, health conditions, and previous symptoms.',
+    askMomCareBtn: 'Ask Buddy',
+    askMomCareDesc: 'Buddy AI remembers your week status, health conditions, and previous symptoms.',
 
     // Triage & Emergency (Hardcoded)
     knowMyDate: 'I know my date →',
@@ -434,6 +442,14 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     callDoctorBtn: 'Call Doctor / Clinic',
     callAmbulanceBtn: 'Call Emergency 108',
     callFamilyBtn: 'Call Family Contact',
+    emergencyCallQuestion: 'Emergency Action: Would you like to call Family Members or 108 Ambulance right now?',
+    emergencyYesCall108: 'Yes, Call 108 (Ambulance)',
+    emergencyYesCallFamily: 'Yes, Call Family Member',
+    emergencyNoNotNow: 'No, Not Right Now',
+    profilePhotoTitle: 'Profile Photo',
+    uploadPhotoBtn: 'Upload Photo',
+    chooseAvatarPreset: 'Or choose a maternal avatar',
+    removePhotoBtn: 'Remove Photo',
 
     // Profile & Settings
     profileTitle: 'Profile & Settings',
@@ -457,7 +473,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     navHome: 'Home',
     navDailyCheckin: 'Daily Check-in',
     navBabyDev: 'Baby Development',
-    navAskMomCare: 'Ask MomCare',
+    navAskMomCare: 'Ask Buddy',
     navReports: 'Reports',
     navDoctorSummary: 'Doctor Summary',
     navCommunity: 'Circle',
@@ -475,7 +491,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     checkinSummaryTitle: 'Your check-in summary',
     savedSuccessCheck: 'Saved ✓',
     tryAgainBtn: 'Try again',
-    personalAiInsightTitle: 'MomCare Personal Insight',
+    personalAiInsightTitle: 'Buddy Personal Insight',
     whyAmISeeingThis: 'Why am I seeing this?',
     dataUsedLabel: 'Data used:',
     profileLearningLabel: '{days} of 7 days logged',
@@ -500,7 +516,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     knowYouBetterTitle: 'Help us know you better',
     skipForNow: 'Skip for now',
     saveAnswer: 'Save',
-    askMomCareShortcutsTitle: 'Ask MomCare',
+    askMomCareShortcutsTitle: 'Ask Buddy',
     askMomCareShortcutsSub: 'Tap any question to ask your AI companion directly:',
     weeklySnapshotTitle: 'Weekly Milestone Snapshot',
     viewFullStory: 'View full week details →',
@@ -647,8 +663,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     checkinSavedSuccess: 'பதிவு வெற்றிகரமாக சேமிக்கப்பட்டது!',
     safetyTriageBtn: 'அவசர பரிசோதனை',
     medicalReportsBtn: 'ஸ்கேன் அறிக்கைகள்',
-    askMomCareBtn: 'மாம்கேர் கேள்வி',
-    askMomCareDesc: 'உங்கள் கர்ப்ப வாரம் மற்றும் ஆரோக்கிய நிலைக்கு ஏற்ப விளக்கம் தருகிறது.',
+    askMomCareBtn: 'Buddy-யிடம் கேட்க',
+    askMomCareDesc: 'Buddy AI உங்கள் கர்ப்ப வாரம் மற்றும் ஆரோக்கிய நிலைக்கு ஏற்ப விளக்கம் தருகிறது.',
 
     // Triage & Emergency (Hardcoded)
     knowMyDate: 'தேதி தெரியும் →',
@@ -686,6 +702,14 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     callDoctorBtn: 'மருத்துவரை அழைக்கவும்',
     callAmbulanceBtn: '108 ஆம்புலன்ஸ் அழைக்க',
     callFamilyBtn: 'குடும்பத்தினரை அழைக்க',
+    emergencyCallQuestion: 'அவசர நடவடிக்கை: இப்போது உங்கள் குடும்பத்தினரை அல்லது 108 ஆம்புலன்ஸை அழைக்க விரும்புகிறீர்களா?',
+    emergencyYesCall108: 'ஆம், 108 ஆம்புலன்ஸ் அழைக்கவும்',
+    emergencyYesCallFamily: 'ஆம், குடும்பத்தினரை அழைக்கவும்',
+    emergencyNoNotNow: 'இல்லை, இப்போது வேண்டாம்',
+    profilePhotoTitle: 'சுயவிவரப் படம்',
+    uploadPhotoBtn: 'படம் பதிவேற்றவும்',
+    chooseAvatarPreset: 'அல்லது அவதார் தேர்வு செய்யவும்',
+    removePhotoBtn: 'படத்தை நீக்குக',
 
     // Profile & Settings
     profileTitle: 'சுயவிவரம் & அமைப்புகள்',
@@ -709,7 +733,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     navHome: 'முகப்பு',
     navDailyCheckin: 'தினசரி நலப் பதிவு',
     navBabyDev: 'குழந்தை வளர்ச்சி',
-    navAskMomCare: 'மாம்கேரிடம் கேளுங்கள்',
+    navAskMomCare: 'Buddy-யிடம் கேளுங்கள்',
     navReports: 'மருத்துவ அறிக்கைகள்',
     navDoctorSummary: 'மருத்துவர் குறிப்பு',
     navCommunity: 'வட்டம் (Circle)',
@@ -727,7 +751,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     checkinSummaryTitle: 'இன்றைய பதிவின் சுருக்கம்',
     savedSuccessCheck: 'சேமிக்கப்பட்டது ✓',
     tryAgainBtn: 'மீண்டும் முயற்சிக்க',
-    personalAiInsightTitle: 'மாம்கேர் தனிப்பட்ட ஆலோசனை',
+    personalAiInsightTitle: 'Buddy தனிப்பட்ட ஆலோசனை',
     whyAmISeeingThis: 'இதை நான் ஏன் பார்க்கிறேன்?',
     dataUsedLabel: 'பயன்படுத்திய விவரம்:',
     profileLearningLabel: '7 நாட்களில் {days} நாட்கள் பதிவாகியுள்ளது',
@@ -752,7 +776,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     knowYouBetterTitle: 'உங்களை இன்னும் நன்றாகப் புரிந்து கொள்ள',
     skipForNow: 'பிறகு செய்கிறேன்',
     saveAnswer: 'சேமி',
-    askMomCareShortcutsTitle: 'மாம்கேரிடம் கேளுங்கள்',
+    askMomCareShortcutsTitle: 'Buddy-யிடம் கேளுங்கள்',
     askMomCareShortcutsSub: 'உங்களுக்காகத் தொகுக்கப்பட்ட கேள்விகள் (தட்டிப் பாருங்கள்):',
     weeklySnapshotTitle: 'வாராந்திர வளர்ச்சிப் பார்வை',
     viewFullStory: 'முழு விவரங்களைப் பார்க்க →',
@@ -899,8 +923,8 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     checkinSavedSuccess: 'जांच सफलतापूर्वक सुरक्षित हो गई!',
     safetyTriageBtn: 'लक्षण जांच',
     medicalReportsBtn: 'मेडिकल रिपोर्ट',
-    askMomCareBtn: 'मॉमकेयर से पूछें',
-    askMomCareDesc: 'आपकी गर्भावस्था के हफ्ते और सेहत के अनुसार जवाब देता है।',
+    askMomCareBtn: 'Buddy से पूछें',
+    askMomCareDesc: 'Buddy AI आपकी गर्भावस्था के हफ्ते और सेहत के अनुसार जवाब देता है।',
 
     // Triage & Emergency (Hardcoded)
     knowMyDate: 'मुझे तारीख पता है →',
@@ -938,6 +962,14 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     callDoctorBtn: 'डॉक्टर को कॉल करें',
     callAmbulanceBtn: '108 एम्बुलेंस बुलाएं',
     callFamilyBtn: 'परिवार को कॉल करें',
+    emergencyCallQuestion: 'आपातकालीन कदम: क्या आप अभी अपने परिवार के सदस्य को या 108 एम्बुलेंस को कॉल करना चाहती हैं?',
+    emergencyYesCall108: 'हाँ, 108 एम्बुलेंस को कॉल करें',
+    emergencyYesCallFamily: 'हाँ, परिवार के सदस्य को कॉल करें',
+    emergencyNoNotNow: 'नहीं, अभी नहीं',
+    profilePhotoTitle: 'प्रोफ़ाइल फ़ोटो',
+    uploadPhotoBtn: 'फ़ोटो अपलोड करें',
+    chooseAvatarPreset: 'या मातृत्व अवतार चुनें',
+    removePhotoBtn: 'फ़ोटो हटाएं',
 
     // Profile & Settings
     profileTitle: 'प्रोफ़ाइल और सेटिंग्स',
@@ -961,7 +993,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     navHome: 'होम',
     navDailyCheckin: 'दैनिक चेक-इन',
     navBabyDev: 'शिशु का विकास',
-    navAskMomCare: 'मॉमकेयर से पूछें',
+    navAskMomCare: 'Buddy से पूछें',
     navReports: 'मेडिकल रिपोर्ट्स',
     navDoctorSummary: 'डॉक्टर सारांश',
     navCommunity: 'सहेलियां (Circle)',
@@ -979,7 +1011,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     checkinSummaryTitle: 'आपकी आज की जांच का सारांश',
     savedSuccessCheck: 'सुरक्षित हुआ ✓',
     tryAgainBtn: 'फिर कोशिश करें',
-    personalAiInsightTitle: 'मॉमकेयर व्यक्तिगत सुझाव',
+    personalAiInsightTitle: 'Buddy व्यक्तिगत सुझाव',
     whyAmISeeingThis: 'मुझे यह क्यों दिख रहा है?',
     dataUsedLabel: 'उपयोग किया गया विवरण:',
     profileLearningLabel: '7 में से {days} दिन का रिकॉर्ड दर्ज',
@@ -1004,7 +1036,7 @@ export const TRANSLATIONS: Record<Language, Translations> = {
     knowYouBetterTitle: 'हमें आपको बेहतर समझने में मदद करें',
     skipForNow: 'बाद में',
     saveAnswer: 'सुरक्षित करें',
-    askMomCareShortcutsTitle: 'मॉमकेयर से पूछें',
+    askMomCareShortcutsTitle: 'Buddy से पूछें',
     askMomCareShortcutsSub: 'आपकी वर्तमान स्थिति के अनुसार तैयार प्रश्न (टैप करें):',
     weeklySnapshotTitle: 'साप्ताहिक विकास झलक',
     viewFullStory: 'पूरे हफ्ते की जानकारी देखें →',

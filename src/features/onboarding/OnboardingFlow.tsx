@@ -23,6 +23,7 @@ import { saveUserProfile } from '../../services/firebase/userService';
 import { useTranslation, type Language } from '../../translations';
 import { useTheme } from '../../context/ThemeContext';
 import { ThemeSelector } from '../../components/ThemeSelector';
+import { MomCareLogo } from '../../components/MomCareLogo';
 
 interface OnboardingFlowProps {
   userId: string;
@@ -342,6 +343,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
         {currentStep === 1 && (
           <div className="space-y-5 animate-in fade-in">
             <div>
+              <MomCareLogo size="md" showText={false} className="mb-2" />
               <h2 className="text-2xl font-black text-[#352F35] tracking-tight">
                 {t.welcomeToMomCare}
               </h2>

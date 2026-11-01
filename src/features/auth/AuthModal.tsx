@@ -19,6 +19,7 @@ import {
 import { getUserProfile } from '../../services/firebase/userService';
 import { useTranslation } from '../../translations';
 import type { UserProfile } from '../../types';
+import { MomCareLogo } from '../../components/MomCareLogo';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -155,10 +156,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         </button>
 
         {/* Top Header */}
-        <div className="text-center mb-6 relative z-10">
-          <div className="w-12 h-12 rounded-2xl bg-[var(--mc-btn-gradient)] flex items-center justify-center text-white mx-auto mb-3 shadow-[0_0_15px_var(--mc-primary-glow)] border border-white/30">
-            <HeartPulse className="w-6 h-6 stroke-[2.3] animate-pulse" />
-          </div>
+        <div className="text-center mb-6 relative z-10 flex flex-col items-center">
+          <MomCareLogo size="md" showText={false} className="mb-3" />
 
           <h2 className="text-xl font-black text-[var(--mc-text-primary)] neon-text-glow">
             {mode === 'login' ? t.welcomeBack : mode === 'signup' ? t.createYourAccount : t.resetPasswordTitle}

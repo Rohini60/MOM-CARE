@@ -1,6 +1,6 @@
-import React from 'react';
 import { HeartPulse, Sparkles, ArrowRight, Globe } from 'lucide-react';
 import { useTranslation, type Language } from '../../translations';
+import { MomCareLogo } from '../../components/MomCareLogo';
 
 interface WelcomeScreenProps {
   onCreateAccount: () => void;
@@ -35,10 +35,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
           {/* Top Language Switcher Bar on Mobile & Desktop */}
           <div className="relative z-10 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-[var(--mc-btn-gradient)] flex items-center justify-center text-white shadow-[0_0_15px_var(--mc-primary-glow)] border border-white/30">
-                <HeartPulse className="w-5 h-5 stroke-[2.3] animate-pulse" />
-              </div>
-              <span className="font-black text-lg text-[var(--mc-text-primary)] tracking-tight neon-text-glow">MomCare</span>
+              <MomCareLogo size="sm" showText={false} />
+              <span className="font-black text-lg text-[var(--mc-text-primary)] tracking-tight neon-text-glow leading-none">
+                Mom<span className="text-[var(--mc-primary)] drop-shadow-[0_0_8px_var(--mc-primary-glow)]">Care</span>
+              </span>
             </div>
 
             {/* Language Switch */}
@@ -63,7 +63,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
           {/* Central Hero Branding & Tagline */}
           <div className="relative z-10 my-auto py-10 lg:py-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--mc-chip-bg)] border border-[var(--mc-chip-border)] text-xs font-mono font-semibold text-[var(--mc-text-primary)] mb-4 shadow-xs">
+            <div className="mb-4">
+              <MomCareLogo size="lg" showText={false} />
+            </div>
+
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--mc-chip-bg)] border border-[var(--mc-chip-border)] text-xs font-mono font-semibold text-[var(--mc-text-primary)] mb-3 shadow-xs">
               <Sparkles className="w-3.5 h-3.5 text-[var(--mc-primary)]" />
               <span>NEXT-GEN MATERNAL INTELLIGENCE</span>
             </div>

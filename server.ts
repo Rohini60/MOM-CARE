@@ -8,6 +8,7 @@ import {
   handleMomCareNoticed,
   handleWombRender,
   handleHomeInsight,
+  handleVaultReportExtraction,
 } from './src/server/geminiHandler';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -68,6 +69,15 @@ app.post('/api/gemini/womb-render', async (req, res) => {
 app.post('/api/gemini/home-insight', async (req, res) => {
   try {
     const result = await handleHomeInsight(req.body);
+    res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/gemini/vault-extract', async (req, res) => {
+  try {
+    const result = await handleVaultReportExtraction(req.body);
     res.json(result);
   } catch (error: any) {
     res.status(500).json({ error: error.message });

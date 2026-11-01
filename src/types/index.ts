@@ -6,6 +6,7 @@ export interface UserProfile {
   email: string;
   displayName: string;
   preferredName?: string | null;
+  photoUrl?: string | null;
   communityAnonymous: boolean;
   age?: number | null;
   dueDate: string;

@@ -435,8 +435,11 @@ export const SymptomCenterScreen: React.FC<SymptomCenterScreenProps> = ({
         symptomName={symptomName}
         emergencyReason={urgentReason}
         doctorName={profile?.doctorName || undefined}
+        doctorPhone={profile?.doctorPhone || undefined}
         clinicName={profile?.clinicName || undefined}
         emergencyContact={profile?.emergencyContact || undefined}
+        familyContactName={profile?.familyContactName || undefined}
+        familyContactPhone={profile?.familyContactPhone || undefined}
       />
     </div>
   );
